@@ -1,7 +1,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>SimpleColorPicker</title>
+    <title>TransferFunctionEditor</title>
     <style>
         body {
             font-family: 'Arial', 'SansSerif', monospace;
@@ -9,19 +9,26 @@
             padding: 0;
             text-align: center;
         }
+
         h1 {
             font-weight: normal;
             margin-top: 5%;
         }
-        a {
-            color: white;
-            text-decoration: none;
+
+        #root {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
+
         #tf {
             width: 500px;
             height: 200px;
             border: 1px black solid;
         }
+
         #cm {
             width: 500px;
             height: 40px;
@@ -30,9 +37,11 @@
         }
     </style>
 <body>
-<h1>TransferFunctionEditor</h1>
-<div id="tf"></div>
-<div id="cm"></div>
+<div id="root">
+    <h1>TransferFunctionEditor</h1>
+    <div id="tf"></div>
+    <div id="cm"></div>
+</div>
 <script type="module" src="./index.js"></script>
 </body>
 </html>

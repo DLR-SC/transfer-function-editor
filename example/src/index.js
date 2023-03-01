@@ -1,7 +1,6 @@
 
-import {TransferFunctionEditor, ColorMap} from '../../dist/transfer-function-editor'
+import {TransparencyEditor, ColorMapEditor} from '../../dist/transfer-function-editor'
 
-const initialTransferFunction = [0, 0.5, 1];
-const tf = new TransferFunctionEditor('#tf', initialTransferFunction);
+const tf = new TransparencyEditor('#tf');
 
-const cm = new ColorMap('#cm');
+const cm = new ColorMapEditor('#cm');
