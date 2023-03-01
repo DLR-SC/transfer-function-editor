@@ -1,0 +1,15 @@
+{
+  "name": "transfer-function-editor-example",
+  "version": "1.0.0",
+  "description": "",
+  "source": "src/index.html",
+  "scripts": {
+    "start": "parcel src/index.html --dist-dir dist --no-cache",
+    "build": "parcel build src/index.html --public-url '.' --dist-dir dist"
+  },
+  "author": "DLR",
+  "license": "MIT",
+  "devDependencies": {
+    "parcel": "^2.8.3"
+  }
+}
