@@ -1,7 +1,8 @@
 import {interpolateNumber, interpolateRgb} from 'd3-interpolate';
-import {rgb} from 'd3-color';
+import {rgb, color} from 'd3-color';
+import {scaleLinear} from "d3-scale";
 
-export default class TransferFunctionEditor {
+export class TransferFunctionEditor {
     private container: HTMLElement;
     private readonly canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
@@ -35,6 +36,7 @@ export default class TransferFunctionEditor {
         this.canvas = document.createElement("canvas");
         this.canvas.width = this.container.clientWidth;
         this.canvas.height = this.container.clientHeight;
+        this.canvas.style.imageRendering = "pixelated";
         this.container.appendChild(this.canvas);
         this.ctx = this.canvas.getContext("2d");
         this.draw();
@@ -107,15 +109,21 @@ export default class TransferFunctionEditor {
     private draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+        const polygon = [{x: 0, y: 1}, ...this.controlPoints, {x: 1, y: 1}];
         const gradient = this.ctx.createLinearGradient(0, this.canvas.height, this.canvas.width, this.canvas.height);
 
-        const gradientStops = [...this.colorMap.map((entry) => entry.x), ...this.controlPoints.map(entry => entry.x)].sort();
-        for (const x of gradientStops) {
-            gradient.addColorStop(x, this.getRGBA(x));
+        if (this.colorMap && this.colorMap.length > 0) {
+            const gradientStops = [...this.colorMap.map((entry) => entry.x), ...this.controlPoints.map(entry => entry.x)].sort();
+            for (const x of gradientStops) {
+                gradient.addColorStop(x, this.getRGBA(x));
+            }
+        } else {
+            for (const controlPoint of this.controlPoints) {
+                gradient.addColorStop(controlPoint.x, `rgba(0, 0, 0, ${1 - controlPoint.y})`);
+            }
         }
-        this.ctx.fillStyle = gradient;
 
-        const polygon = [{x: 0, y: 1}, ...this.controlPoints, {x: 1, y: 1}];
+        this.ctx.fillStyle = gradient;
         this.ctx.beginPath();
         for (let i = 0; i < polygon.length; i++) {
             const x = polygon[i].x * this.canvas.width;
@@ -128,7 +136,6 @@ export default class TransferFunctionEditor {
         }
         this.ctx.closePath();
         this.ctx.fill();
-
 
         this.ctx.strokeStyle = "black";
         this.ctx.beginPath();
@@ -225,5 +232,60 @@ export default class TransferFunctionEditor {
             this.isDragging = false;
             this.dragIndex = -1;
         });
+    }
+}
+
+export class ColorMap {
+    private container: HTMLElement;
+    private readonly canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+
+    private colorMap: { x: number, color: string }[];
+
+    private isDragging: boolean = false;
+    private dragIndex: number = -1;
+
+    constructor(container: HTMLElement | string, colorMap: { x: number, color: string }[] = [
+        {x: 0, color: 'blue'},
+        {x: 0.5, color: 'white'},
+        {x: 1, color: 'red'}
+    ]) {
+        if (container) {
+            if (typeof (container) == "string") {
+                this.container = document.querySelector(container);
+            } else {
+                this.container = container;
+            }
+        } else {
+            throw "No element given!"
+        }
+
+        this.colorMap = colorMap;
+
+        this.canvas = document.createElement("canvas");
+        this.canvas.width = this.container.clientWidth;
+        this.canvas.height = this.container.clientHeight;
+
+        this.container.appendChild(this.canvas);
+        this.ctx = this.canvas.getContext("2d");
+
+        this.draw();
+        this.addEventListeners();
+    }
+
+    private draw() {
+        const colorRange = scaleLinear<string, number>()
+            .domain(this.colorMap.map(entry => entry.x))
+            .range(this.colorMap.map(entry => entry.color))
+            .interpolate(interpolateRgb)
+
+        for (let i = 0; i < 512; ++i) {
+            this.ctx.fillStyle = colorRange(i / (512 - 1));
+            this.ctx.fillRect(i, 0, 1, this.canvas.height);
+        }
+    }
+
+    private addEventListeners() {
+        // implement
     }
 }
