@@ -49,6 +49,8 @@ export class TransparencyEditor {
     private ctx: CanvasRenderingContext2D;
     private controlPoints: Array<AlphaStop>;
 
+    private alphaRange: d3Scale.ScaleLinear<number, number>;
+
     private colorRange: d3Scale.ScaleLinear<string, string>;
     private colorMap: Array<ColorStop> = [
         {stop: 0, rgb: 'blue'},
@@ -86,6 +88,7 @@ export class TransparencyEditor {
         this.container.appendChild(this.canvas);
         this.ctx = this.canvas.getContext("2d");
         this.updateColorRange();
+        this.updateAlphaRange();
         this.draw();
         this.addEventListeners();
     }
@@ -95,31 +98,7 @@ export class TransparencyEditor {
     }
 
     public getAlpha(stop: number): number {
-        // find control points
-        let cp1: AlphaStop;
-        let cp2: AlphaStop;
-        for (let i = 0; i < this.controlPoints.length; i++) {
-            if (this.controlPoints[i].stop === stop) {
-                return this.controlPoints[i].alpha;
-            }
-
-            if (stop < this.controlPoints[i].stop) {
-                cp1 = this.controlPoints[i - 1];
-                cp2 = this.controlPoints[i];
-                break;
-            }
-        }
-
-        if (!cp1 || !cp2) {
-            throw "Parameter 'stop' is not in the range [0, 1]!";
-        }
-
-        const alpha1 = cp1.alpha;
-        const alpha2 = cp2.alpha;
-        const x1 = cp1.stop;
-        const x2 = cp2.stop;
-
-        return d3Interpolate.interpolateNumber(alpha1, alpha2)((stop - x1) / (x2 - x1));
+        return this.alphaRange(stop);
     }
 
     public getRGBA(stop: number): string {
@@ -129,17 +108,32 @@ export class TransparencyEditor {
         return color.formatHex8();
     }
 
-    public addControlPointAt(x, alpha) {
-        this.controlPoints.push({stop: x, alpha});
+    public addControlPoint(stop, alpha): void {
+        this.controlPoints.push({stop, alpha});
         this.sortControlPoints();
+        this.updateAlphaRange();
         this.draw();
     }
 
-    public removeControlPointAt(x, y) {
-
+    public removeControlPointAt(x, y): void {
+        let indexToDelete = -1;
+        for (let i = 1; i < this.controlPoints.length - 1; i++) {
+            const controlPoint = this.controlPoints[i];
+            const dx = controlPoint.stop * this.canvas.width - x;
+            const dy = controlPoint.alpha * this.canvas.height - y;
+            if (Math.sqrt(dx * dx + dy * dy) < this.controlPointSize) {
+                indexToDelete = i;
+                break;
+            }
+        }
+        if (indexToDelete !== -1) {
+            this.controlPoints.splice(indexToDelete, 1);
+            this.updateAlphaRange();
+            this.draw();
+        }
     }
 
-    public moveControlPointTo() {
+    public moveControlPointTo(): void {
 
     }
 
@@ -154,6 +148,13 @@ export class TransparencyEditor {
             .domain(this.colorMap.map(entry => entry.stop))
             .range(this.colorMap.map(entry => entry.rgb))
             .interpolate(d3Interpolate.interpolateRgb)
+    }
+
+    private updateAlphaRange() {
+        this.alphaRange = d3Scale.scaleLinear<number, number>()
+            .domain(this.controlPoints.map(entry => entry.stop))
+            .range(this.controlPoints.map(entry => entry.alpha))
+            .interpolate(d3Interpolate.interpolateNumber)
     }
 
     private draw() {
@@ -197,10 +198,6 @@ export class TransparencyEditor {
         this.controlPoints.sort((a, b) => a.stop - b.stop);
     }
 
-    private controlPointAt(stop: number, alpha: number) {
-
-    }
-
     private pixelToNormalized(x: number, y: number): { stop: number, alpha: number } {
         const stop = Math.max(0, Math.min(1, x / this.canvas.width));
         const alpha = Math.max(0, Math.min(1, y / this.canvas.height));
@@ -232,43 +229,28 @@ export class TransparencyEditor {
             }
 
             if (e.button === 0) { // Left click
-                const x = Math.max(0, Math.min(1, e.offsetX / this.canvas.width));
-                const y = Math.max(0, Math.min(1, e.offsetY / this.canvas.height));
-                this.addControlPointAt(x, y);
+                const {stop, alpha} = this.pixelToNormalized(e.offsetX, e.offsetY);
+                this.addControlPoint(stop, alpha);
                 checkDragStart(e);
             } else if (e.button === 1) { // Middle click
-                let indexToDelete = -1;
-                for (let i = 1; i < this.controlPoints.length - 1; i++) {
-                    const controlPoint = this.controlPoints[i];
-                    const dx = controlPoint.stop * this.canvas.width - e.offsetX;
-                    const dy = controlPoint.alpha * this.canvas.height - e.offsetY;
-                    if (Math.sqrt(dx * dx + dy * dy) < this.controlPointSize) {
-                        indexToDelete = i;
-                        break;
-                    }
-                }
-                if (indexToDelete !== -1) {
-                    this.controlPoints.splice(indexToDelete, 1);
-                    this.draw();
-                }
+                this.removeControlPointAt(e.offsetX, e.offsetY);
             }
         });
 
         this.canvas.addEventListener("mousemove", (e) => {
             if (this.isDragging && this.dragIndex !== -1) {
-                const x = Math.max(0, Math.min(1, e.offsetX / this.canvas.width));
-                const y = Math.max(0, Math.min(1, e.offsetY / this.canvas.height));
+                const {stop, alpha} = this.pixelToNormalized(e.offsetX, e.offsetY);
 
                 if (this.dragIndex === 0) {
-                    this.controlPoints[this.dragIndex].alpha = y;
+                    this.controlPoints[this.dragIndex].alpha = alpha;
                 } else if (this.dragIndex === this.controlPoints.length - 1) {
-                    this.controlPoints[this.dragIndex].alpha = y;
+                    this.controlPoints[this.dragIndex].alpha = alpha;
                 } else {
-                    this.controlPoints[this.dragIndex].stop = x;
-                    this.controlPoints[this.dragIndex].alpha = y;
+                    this.controlPoints[this.dragIndex].stop = stop;
+                    this.controlPoints[this.dragIndex].alpha = alpha;
                 }
-
                 this.sortControlPoints();
+                this.updateAlphaRange();
                 this.draw();
             }
         });
@@ -297,6 +279,7 @@ export class TransparencyEditor {
                 this.dragIndex = -1;
 
                 this.sortControlPoints();
+                this.updateAlphaRange();
                 this.draw();
             }
         });
