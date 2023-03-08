@@ -91,7 +91,8 @@ export class TransparencyEditor {
     }
 
     public getRGB(stop: number): string {
-        let cp1: ColorStop;
+        return this.colorRange(stop);
+        /*let cp1: ColorStop;
         let cp2: ColorStop;
         for (let i = 0; i < this.colorMap.length; i++) {
             if (this.colorMap[i].stop === stop) {
@@ -114,7 +115,7 @@ export class TransparencyEditor {
         const x1 = cp1.stop;
         const x2 = cp2.stop;
 
-        return d3Interpolate.interpolateRgb(color1, color2)((stop - x1) / (x2 - x1));
+        return d3Interpolate.interpolateRgb(color1, color2)((stop - x1) / (x2 - x1));*/
     }
 
     public getAlpha(stop: number): number {
@@ -185,8 +186,8 @@ export class TransparencyEditor {
 
         // Draw the color gradient.
         for (let i = 0; i < this.canvas.width; ++i) {
-            this.ctx.fillStyle = this.colorRange(i / (this.canvas.width - 1));
             const alpha = this.getAlpha(i / (this.canvas.width - 1));
+            this.ctx.fillStyle = this.getRGBA(i / (this.canvas.width - 1)); //this.colorRange(i / (this.canvas.width - 1));
             this.ctx.fillRect(i, alpha * this.canvas.height, 1,  (1 - alpha) * this.canvas.height);
         }
 
