@@ -5,6 +5,10 @@ import * as d3Scale from "d3-scale";
 export class TransferFunctionEditor {
     private container: HTMLElement;
 
+    private transparencyEditor: TransparencyEditor;
+
+    private colorMapEditor: ColorMapEditor;
+
     constructor(container: HTMLElement | string) {
         if (container) {
             if (typeof (container) == "string") {
@@ -18,6 +22,19 @@ export class TransferFunctionEditor {
 
         this.container.classList.add("transfer-function-editor");
 
+        const transparencyEditorElement = document.createElement("div");
+        transparencyEditorElement.style.width = "100%";
+        transparencyEditorElement.style.minHeight = "50px";
+        this.container.append(transparencyEditorElement);
+        this.transparencyEditor = new TransparencyEditor(transparencyEditorElement);
+
+        const colorMapEditorElement = document.createElement("div");
+        colorMapEditorElement.style.width = "100%";
+        colorMapEditorElement.style.minHeight = "10px";
+        this.container.append(colorMapEditorElement);
+        this.colorMapEditor = new ColorMapEditor(colorMapEditorElement);
+
+        this.colorMapEditor.onUpdate((colorMap) => this.transparencyEditor.setColorMap(colorMap));
     }
 }
 
@@ -31,6 +48,8 @@ export class TransparencyEditor {
     private readonly canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
     private controlPoints: Array<AlphaStop>;
+
+    private colorRange: d3Scale.ScaleLinear<string, string>;
     private colorMap: Array<ColorStop> = [
         {stop: 0, rgb: 'blue'},
         {stop: 0.5, rgb: 'white'},
@@ -66,6 +85,7 @@ export class TransparencyEditor {
         this.canvas.style.imageRendering = "pixelated";
         this.container.appendChild(this.canvas);
         this.ctx = this.canvas.getContext("2d");
+        this.updateColorRange();
         this.draw();
         this.addEventListeners();
     }
@@ -146,40 +166,29 @@ export class TransparencyEditor {
 
     }
 
+    public setColorMap(colorMap: Array<ColorStop>) {
+        this.colorMap = colorMap;
+        this.updateColorRange();
+        this.draw();
+    }
+
+    private updateColorRange() {
+        this.colorRange = d3Scale.scaleLinear<string, number>()
+            .domain(this.colorMap.map(entry => entry.stop))
+            .range(this.colorMap.map(entry => entry.rgb))
+            .interpolate(d3Interpolate.interpolateRgb)
+    }
+
     private draw() {
         // Clear the drawing area.
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Create a polygon of the area below the control points.
-        const polygon = [{stop: 0, alpha: 1}, ...this.controlPoints, {stop: 1, alpha: 1}];
-        const gradient = this.ctx.createLinearGradient(0, this.canvas.height, this.canvas.width, this.canvas.height);
-
-        // If a color map exists, we fill the gradient with it, otherwise we just draw a black-alpha gradient.
-        if (this.colorMap && this.colorMap.length > 0) {
-            const gradientStops = [...this.colorMap.map((entry) => entry.stop), ...this.controlPoints.map((entry) => entry.stop)].sort();
-            for (const x of gradientStops) {
-                gradient.addColorStop(x, this.getRGBA(x));
-            }
-        } else {
-            for (const controlPoint of this.controlPoints) {
-                gradient.addColorStop(controlPoint.stop, `rgba(0, 0, 0, ${1 - controlPoint.alpha})`);
-            }
+        // Draw the color gradient.
+        for (let i = 0; i < this.canvas.width; ++i) {
+            this.ctx.fillStyle = this.colorRange(i / (this.canvas.width - 1));
+            const alpha = this.getAlpha(i / (this.canvas.width - 1));
+            this.ctx.fillRect(i, alpha * this.canvas.height, 1,  (1 - alpha) * this.canvas.height);
         }
-
-        // Draw the gradient.
-        this.ctx.fillStyle = gradient;
-        this.ctx.beginPath();
-        for (let i = 0; i < polygon.length; i++) {
-            const x = polygon[i].stop * this.canvas.width;
-            const y = polygon[i].alpha * this.canvas.height;
-            if (i === 0) {
-                this.ctx.moveTo(x, y);
-            } else {
-                this.ctx.lineTo(x, y);
-            }
-        }
-        this.ctx.closePath();
-        this.ctx.fill();
 
         // Draw the lines between points.
         this.ctx.strokeStyle = "black";
@@ -334,6 +343,8 @@ export class ColorMapEditor {
     private dragIndex: number = -1;
     private controlPointSize: number = 5;
 
+    private callback: (colorMap: Array<ColorStop>) => void = () => {};
+
     constructor(container: HTMLElement | string, colorMap: Array<ColorStop> = [
         {stop: 0, rgb: 'blue'},
         {stop: 0.5, rgb: 'white'},
@@ -365,10 +376,13 @@ export class ColorMapEditor {
         this.addEventListeners();
     }
 
-    private draw() {
+    public onUpdate(callback: (colorMap: Array<ColorStop>) => void) {
+        this.callback = callback;
+    }
 
-        for (let i = 0; i < 512; ++i) {
-            this.ctx.fillStyle = this.colorRange(i / (512 - 1));
+    private draw() {
+        for (let i = 0; i < this.canvas.width; ++i) {
+            this.ctx.fillStyle = this.colorRange(i / (this.canvas.width - 1));
             this.ctx.fillRect(i, 0, 1, this.canvas.height);
         }
 
@@ -423,6 +437,7 @@ export class ColorMapEditor {
                 this.colorMap.sort((a, b) => a.stop - b.stop);
                 this.updateColorRange();
                 this.draw();
+                this.callback(this.colorMap);
                 checkDragStart(e);
             } else if (e.button === 1) { // Middle click
                 let indexToDelete = -1;
@@ -439,6 +454,7 @@ export class ColorMapEditor {
                     this.colorMap.splice(indexToDelete, 1);
                     this.updateColorRange();
                     this.draw();
+                    this.callback(this.colorMap);
                 }
             }
         });
@@ -454,6 +470,7 @@ export class ColorMapEditor {
                 this.colorMap.sort((a, b) => a.stop - b.stop);
                 this.updateColorRange();
                 this.draw();
+                this.callback(this.colorMap);
             }
         });
 
