@@ -93,16 +93,35 @@ export class ColorPicker {
         const hsl = d3HSL(this.hex);
         return {h: hsl.h, s: hsl.s, l: hsl.l, a: 1 - hsl.opacity};
     }
+    
+    public getHSV(): HSV {
+        const hsv = d3HSV(this.hex);
+        return {h: hsv.h, s: hsv.s, v: hsv.v};
+    }
+
+    public getHSVA(): HSVA {
+        const hsv = d3HSV(this.hex);
+        return {h: hsv.h, s: hsv.s, v: hsv.v, a: 1 - hsv.opacity};
+    }
 
     private drawSL() {
-        console.time("draw");
         for (let x = 0; x < this.CANVAS_SIZE; x++) {
-            for (let y = 0; y < this.CANVAS_SIZE; y++) {
-                this.slCtx.fillStyle = d3HSV(this.hue, x / this.CANVAS_SIZE, 1 - (y / this.CANVAS_SIZE)).formatHex();
-                this.slCtx.fillRect(x, y, 1, 1);
-            }
+            const gradient = this.slCtx.createLinearGradient(0, 0, 0, this.CANVAS_SIZE);
+            gradient.addColorStop(0, d3HSV(this.hue, x / this.CANVAS_SIZE, 1).formatHex())
+            gradient.addColorStop(1, d3HSV(this.hue, x / this.CANVAS_SIZE, 0).formatHex())
+
+            this.slCtx.fillStyle = gradient;
+            this.slCtx.fillRect(x, 0, 1, this.CANVAS_SIZE);
         }
-        console.timeEnd("draw");
+
+        const hsv = this.getHSV();
+        this.slCtx.strokeStyle = "white";
+        const x = hsv.s * this.CANVAS_SIZE;
+        const y = (1 - hsv.v) * this.CANVAS_SIZE;
+        this.slCtx.beginPath();
+        this.slCtx.arc(x, y, 5, 0, 2 * Math.PI);
+        this.slCtx.fill();
+        this.slCtx.stroke();
     }
 }
 
@@ -123,5 +142,14 @@ interface HSL {
 }
 
 interface HSLA extends HSL {
+    a: number;
+}
+interface HSV {
+    h: number;
+    s: number;
+    v: number;
+}
+
+interface HSVA extends HSV {
     a: number;
 }
