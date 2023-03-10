@@ -1,3 +1,14 @@
+
+export interface AlphaStop {
+    stop: number;
+    alpha: number;
+}
+
+export interface ColorStop {
+    stop: number;
+    rgb: string;
+}
+
 /**
  * This is for compatibility with ParaViews transfer functions.
  */

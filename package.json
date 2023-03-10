@@ -2,15 +2,14 @@
   "name": "transfer-function-editor",
   "version": "1.0.0",
   "description": "A simple transfer function editor.",
-  "source": "src/TransferFunctionEditor.ts",
-  "main": "dist/transfer-function-editor.js",
+  "source": "src/index.ts",
   "module": "dist/transfer-function-editor.module.js",
   "unpkg": "dist/transfer-function-editor.umd.js",
   "amdName": "TransferFunctionEditor",
   "scripts": {
     "build": "microbundle"
   },
-  "keywords": [],
+  "keywords": ["transfer function", "tf", "transparency", "color", "d3", "interpolation", "paraview"],
   "author": "DLR",
   "license": "MIT",
   "dependencies": {
