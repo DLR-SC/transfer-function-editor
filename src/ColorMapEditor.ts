@@ -23,7 +23,7 @@ export class ColorMapEditor {
         {stop: 1, rgb: 'red'}
     ]) {
         if (container) {
-            if (typeof (container) == "string") {
+            if (typeof (container) === "string") {
                 this.container = document.querySelector(container);
             } else {
                 this.container = container;
@@ -32,7 +32,7 @@ export class ColorMapEditor {
             throw "No element given!"
         }
 
-        this.container.classList.add("color-map-editor");
+        this.container.classList.add("tfe-color-map-editor");
 
         this.colorMap = colorMap;
         this.updateColorRange();
@@ -42,7 +42,7 @@ export class ColorMapEditor {
         this.canvas.height = this.container.clientHeight;
 
         this.container.appendChild(this.canvas);
-        this.ctx = this.canvas.getContext("2d");
+        this.ctx = this.canvas.getContext("2d", {alpha: false});
 
         this.draw();
         this.addEventListeners();

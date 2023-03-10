@@ -29,7 +29,7 @@ export class TransparencyEditor {
         {stop: 1, alpha: 0}
     ]) {
         if (container) {
-            if (typeof (container) == "string") {
+            if (typeof (container) === "string") {
                 this.container = document.querySelector(container);
             } else {
                 this.container = container;
@@ -38,7 +38,7 @@ export class TransparencyEditor {
             throw "No element given!"
         }
 
-        this.container.classList.add("transparency-editor");
+        this.container.classList.add("tfe-transparency-editor");
 
         this.controlPoints = transferFunction;
         this.canvas = document.createElement("canvas");

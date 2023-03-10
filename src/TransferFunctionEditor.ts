@@ -10,7 +10,7 @@ export class TransferFunctionEditor {
 
     constructor(container: HTMLElement | string) {
         if (container) {
-            if (typeof (container) == "string") {
+            if (typeof (container) === "string") {
                 this.container = document.querySelector(container);
             } else {
                 this.container = container;
@@ -19,7 +19,7 @@ export class TransferFunctionEditor {
             throw "No element given!"
         }
 
-        this.container.classList.add("transfer-function-editor");
+        this.container.classList.add("tfe-transfer-function-editor");
 
         const transparencyEditorElement = document.createElement("div");
         transparencyEditorElement.style.width = "100%";
