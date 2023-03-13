@@ -1,13 +1,14 @@
-import {hsl as d3HSL, rgb as d3RGB} from "d3-color";
-import {hsv as d3HSV} from "d3-hsv";
+import {Color, hsl as d3HSL, rgb as d3RGB} from "d3-color";
+import {hsv, hsv as d3HSV, HSVColor} from "d3-hsv";
 
 export class ColorPicker {
     private container: HTMLElement;
     private showAlpha: boolean;
-    private hex: string;
-    private hue: number;
-    private readonly slCanvas: HTMLCanvasElement;
-    private slCtx: CanvasRenderingContext2D;
+    private hsv: HSVColor;
+    private readonly svCanvas: HTMLCanvasElement;
+    private svContext: CanvasRenderingContext2D;
+    private readonly hCanvas: HTMLCanvasElement;
+    private hContext: CanvasRenderingContext2D;
     private readonly CANVAS_SIZE: number = 256;
 
     constructor(container: HTMLElement | string, showAlpha = false, initialColor: string = "#FFFFFF") {
@@ -21,9 +22,8 @@ export class ColorPicker {
             throw "No element given!"
         }
 
+        this.hsv = d3HSV(initialColor);
         this.showAlpha = showAlpha;
-        this.hex = initialColor;
-        this.hue = this.getHSL().h;
         this.container.classList.add("tfe-color-picker");
 
         const rootContainer = document.createElement("div");
@@ -34,94 +34,203 @@ export class ColorPicker {
         rootContainer.style.padding = "12px";
         this.container.append(rootContainer);
 
-        const slPickerContainer = document.createElement("div");
-        slPickerContainer.classList.add("tfe-color-picker-sl-picker");
-        slPickerContainer.style.width = `${this.CANVAS_SIZE}px`;
-        slPickerContainer.style.height = `${this.CANVAS_SIZE}px`;
-        rootContainer.append(slPickerContainer);
+        const svPickerContainer = document.createElement("div");
+        svPickerContainer.classList.add("tfe-color-picker-sl-picker");
+        svPickerContainer.style.width = `${this.CANVAS_SIZE}px`;
+        svPickerContainer.style.height = `${this.CANVAS_SIZE}px`;
+        rootContainer.append(svPickerContainer);
 
-        this.slCanvas = document.createElement("canvas");
-        this.slCanvas.width = slPickerContainer.clientWidth;
-        this.slCanvas.height = slPickerContainer.clientHeight;
+        this.svCanvas = document.createElement("canvas");
+        this.svCanvas.width = svPickerContainer.clientWidth;
+        this.svCanvas.height = svPickerContainer.clientHeight;
 
-        slPickerContainer.appendChild(this.slCanvas);
-        this.slCtx = this.slCanvas.getContext("2d", {alpha: false});
+        svPickerContainer.appendChild(this.svCanvas);
+        this.svContext = this.svCanvas.getContext("2d", {alpha: false});
 
-        this.drawSL();
+        this.drawSVPicker();
+        this.addSVEventListener();
+
+        const hPickerContainer = document.createElement("div");
+        hPickerContainer.classList.add("tfe-color-picker-h-picker");
+        hPickerContainer.style.width = `24px`;
+        hPickerContainer.style.height = `${this.CANVAS_SIZE}px`;
+        hPickerContainer.style.paddingLeft = "12px";
+        rootContainer.append(hPickerContainer);
+
+        this.hCanvas = document.createElement("canvas");
+        this.hCanvas.width = hPickerContainer.clientWidth;
+        this.hCanvas.height = hPickerContainer.clientHeight;
+
+        hPickerContainer.appendChild(this.hCanvas);
+        this.hContext = this.hCanvas.getContext("2d", {alpha: false});
+
+        this.drawHPicker();
+        this.addHEventListener();
     }
 
     public setHEX(color: string) {
-        this.hex = color;
+        this.hsv = d3HSV(color);
+        this.drawAll();
     }
 
     public setRGB(r: number, g: number, b: number) {
-        this.hex = d3RGB(r, g, b).formatHex();
+        this.hsv = d3HSV(`rgb(${r * 255},${g * 255},${b * 255})`);
+        this.drawAll();
     }
 
     public setRGBA(r: number, g: number, b: number, a: number) {
-        this.hex = d3RGB(r, g, b, 1 - a).formatHex8();
+        this.hsv = d3HSV(`rgba(${r * 255},${g * 255},${b * 255},${1 - a})`);
+        this.drawAll();
     }
 
     public setHSL(h: number, s: number, l: number) {
-        this.hex = d3HSL(h, s, l).formatHex();
+        this.hsv = d3HSV(`hsl(${h * 360} ${s * 100} ${l * 100})`);
+        this.drawAll();
     }
 
     public setHSLA(h: number, s: number, l: number, a: number) {
-        this.hex = d3HSL(h, s, l, 1 - a).formatHex8();
+        this.hsv = d3HSV(`hsla(${h * 360} ${s * 100} ${l * 100} ${1 - a})`);
+        this.drawAll();
+    }
+
+    public setHSV(h: number, s: number, v: number) {
+        this.hsv = d3HSV(h, s, v);
+        this.drawAll();
+    }
+
+    public setHSVA(h: number, s: number, v: number, a: number) {
+        this.hsv = d3HSV(h, s, v, 1 - a);
+        this.drawAll();
     }
 
     public getHEX(): string {
-        return this.hex;
+        return this.formatHSVA(this.hsv);
     }
 
     public getRGB(): RGB {
-        const rgb = d3RGB(this.hex);
+        const rgb = this.hsv.rgb();
         return {r: rgb.r, g: rgb.g, b: rgb.b};
     }
 
     public getRGBA(): RGBA {
-        const rgb = d3RGB(this.hex);
+        const rgb = this.hsv.rgb();
         return {r: rgb.r, g: rgb.g, b: rgb.b, a: 1 - rgb.opacity};
     }
 
     public getHSL(): HSL {
-        const hsl = d3HSL(this.hex);
+        const hsl = d3HSL(this.hsv.formatHsl());
         return {h: hsl.h, s: hsl.s, l: hsl.l};
     }
 
     public getHSLA(): HSLA {
-        const hsl = d3HSL(this.hex);
+        const hsl = d3HSL(this.hsv.formatHsl());
         return {h: hsl.h, s: hsl.s, l: hsl.l, a: 1 - hsl.opacity};
     }
-    
+
     public getHSV(): HSV {
-        const hsv = d3HSV(this.hex);
-        return {h: hsv.h, s: hsv.s, v: hsv.v};
+        return {h: this.hsv.h, s: this.hsv.s, v: this.hsv.v};
     }
 
     public getHSVA(): HSVA {
-        const hsv = d3HSV(this.hex);
-        return {h: hsv.h, s: hsv.s, v: hsv.v, a: 1 - hsv.opacity};
+        return {h: this.hsv.h, s: this.hsv.s, v: this.hsv.v, a: 1 - this.hsv.opacity};
     }
 
-    private drawSL() {
-        for (let x = 0; x < this.CANVAS_SIZE; x++) {
-            const gradient = this.slCtx.createLinearGradient(0, 0, 0, this.CANVAS_SIZE);
-            gradient.addColorStop(0, d3HSV(this.hue, x / this.CANVAS_SIZE, 1).formatHex())
-            gradient.addColorStop(1, d3HSV(this.hue, x / this.CANVAS_SIZE, 0).formatHex())
+    private drawAll() {
+        this.drawHPicker();
+        this.drawSVPicker();
+    }
 
-            this.slCtx.fillStyle = gradient;
-            this.slCtx.fillRect(x, 0, 1, this.CANVAS_SIZE);
+    private drawSVPicker() {
+        for (let x = 0; x < this.CANVAS_SIZE; x++) {
+            const gradient = this.svContext.createLinearGradient(0, 0, 0, this.CANVAS_SIZE);
+            gradient.addColorStop(0, d3HSV(this.hsv.h, x / this.CANVAS_SIZE, 1).formatHex())
+            gradient.addColorStop(1, d3HSV(this.hsv.h, x / this.CANVAS_SIZE, 0).formatHex())
+
+            this.svContext.fillStyle = gradient;
+            this.svContext.fillRect(x, 0, 1, this.CANVAS_SIZE);
         }
 
-        const hsv = this.getHSV();
-        this.slCtx.strokeStyle = "white";
-        const x = hsv.s * this.CANVAS_SIZE;
-        const y = (1 - hsv.v) * this.CANVAS_SIZE;
-        this.slCtx.beginPath();
-        this.slCtx.arc(x, y, 5, 0, 2 * Math.PI);
-        this.slCtx.fill();
-        this.slCtx.stroke();
+        this.svContext.strokeStyle = "white";
+        this.svContext.fillStyle = "transparent";
+        const x = this.hsv.s * this.CANVAS_SIZE;
+        const y = (1 - this.hsv.v) * this.CANVAS_SIZE;
+        this.svContext.beginPath();
+        this.svContext.arc(x, y, 5, 0, 2 * Math.PI);
+        this.svContext.fill();
+        this.svContext.stroke();
+    }
+
+    private drawHPicker() {
+        const gradient = this.hContext.createLinearGradient(0, 0, 0, this.CANVAS_SIZE);
+        gradient.addColorStop(0, "#ff0000");
+        gradient.addColorStop(1 / 6, "#ffff00");
+        gradient.addColorStop(1 / 3, "#00ff00");
+        gradient.addColorStop(1 / 2, "#00ffff");
+        gradient.addColorStop(2 / 3, "#0000ff");
+        gradient.addColorStop(5 / 6, "#ff00ff");
+        gradient.addColorStop(1, "#ff0000");
+        this.hContext.fillStyle = gradient;
+        this.hContext.fillRect(0, 0, this.hCanvas.width, this.hCanvas.height);
+
+        this.hContext.strokeStyle = "black";
+        this.hContext.fillStyle = "transparent";
+        const x = this.hCanvas.width / 2;
+        const y = (this.hsv.h / 360) * this.CANVAS_SIZE;
+        this.hContext.beginPath();
+        this.hContext.arc(x, y, 5, 0, 2 * Math.PI);
+        this.hContext.fill();
+        this.hContext.stroke();
+    }
+
+    private addSVEventListener() {
+        let isDragging = false;
+
+        const updateSV = (x, y) => {
+            this.hsv.s = x / this.CANVAS_SIZE;
+            this.hsv.v = 1 - y / this.CANVAS_SIZE;
+            this.drawSVPicker();
+        }
+
+        this.svCanvas.addEventListener("mousedown", (e) => {
+            isDragging = true;
+            updateSV(e.offsetX, e.offsetY);
+        });
+
+        this.svCanvas.addEventListener("mousemove", (e) => {
+            if (isDragging) {
+                updateSV(e.offsetX, e.offsetY);
+            }
+        })
+
+        this.svCanvas.addEventListener("mouseleave", (e) => isDragging = false);
+        this.svCanvas.addEventListener("mouseup", (e) => isDragging = false);
+    }
+
+    private addHEventListener() {
+        let isDragging = false;
+
+        const updateH = (y) => {
+            this.hsv.h = (y / this.CANVAS_SIZE) * 360;
+            this.drawAll();
+        }
+
+        this.hCanvas.addEventListener("mousedown", (e) => {
+            isDragging = true;
+            updateH(e.offsetY);
+        });
+
+        this.hCanvas.addEventListener("mousemove", (e) => {
+            if (isDragging) {
+                updateH(e.offsetY);
+            }
+        })
+
+        this.hCanvas.addEventListener("mouseleave", (e) => isDragging = false);
+        this.hCanvas.addEventListener("mouseup", (e) => isDragging = false);
+    }
+
+    private formatHSVA(hsv: HSVColor): string {
+        return d3HSL(hsv.toString()).formatHex8();
     }
 }
 
@@ -144,6 +253,7 @@ interface HSL {
 interface HSLA extends HSL {
     a: number;
 }
+
 interface HSV {
     h: number;
     s: number;
