@@ -5,11 +5,22 @@ export class ColorPicker {
     private container: HTMLElement;
     private showAlpha: boolean;
     private hsv: HSVColor;
+    private backUpHue;
     private readonly svCanvas: HTMLCanvasElement;
     private svContext: CanvasRenderingContext2D;
     private readonly hCanvas: HTMLCanvasElement;
     private hContext: CanvasRenderingContext2D;
     private readonly CANVAS_SIZE: number = 256;
+
+    private inputFiels: {
+        h: HTMLInputElement,
+        s: HTMLInputElement,
+        v: HTMLInputElement,
+        r: HTMLInputElement,
+        g: HTMLInputElement,
+        b: HTMLInputElement,
+        hex: HTMLInputElement
+    };
 
     constructor(container: HTMLElement | string, showAlpha = false, initialColor: string = "#FFFFFF") {
         if (container) {
@@ -23,83 +34,152 @@ export class ColorPicker {
         }
 
         this.hsv = d3HSV(initialColor);
+        if (Number.isNaN(this.hsv.h)) {
+            this.hsv.h = 180;
+        } else {
+            this.backUpHue = this.hsv.h;
+        }
+
         this.showAlpha = showAlpha;
         this.container.classList.add("tfe-color-picker");
 
-        const rootContainer = document.createElement("div");
-        rootContainer.classList.add("tfe-color-picker-root");
-        rootContainer.style.width = "100%";
-        rootContainer.style.height = "100%";
-        rootContainer.style.display = "flex";
-        rootContainer.style.padding = "12px";
-        this.container.append(rootContainer);
+        this.container.innerHTML = `
+            <style>
+                .tfe-color-picker-root {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    margin: 12px;
+                }
+                
+                .tfe-color-picker-sl-picker {
+                    width: ${this.CANVAS_SIZE}px;
+                    height: ${this.CANVAS_SIZE}px;
+                }
+                
+                .tfe-color-picker-h-picker {
+                    width: 18px;
+                    height: ${this.CANVAS_SIZE}px;
+                    margin-left: 12px;
+                }
+            
+                .tfe-color-picker-input-root {
+                    display: grid;
+                    grid-template-columns: 36px 78px;
+                    grid-template-rows: repeat(3, auto) 20px repeat(3, auto) 20px auto;
+                    grid-column-gap: 6px;
+                    grid-row-gap: 6px;
+                    align-items: center;
+                    align-content: space-evenly;
+                    margin-left: 12px;
+                }
+            
+                .tfe-color-picker-input-root > label {
+                    text-align: right;
+                } 
+                
+                .tfe-color-picker-input-root > input {
+                    text-align: right;
+                    font-family: monospace;
+                } 
+            </style>
+            <div class="tfe-color-picker-root">
+                <div class="tfe-color-picker-sl-picker">
+                    <canvas class="tfe-color-picker-sl-picker-canvas" width="${this.CANVAS_SIZE}" height="${this.CANVAS_SIZE}" />
+                </div>
+                <div class="tfe-color-picker-h-picker">
+                    <canvas class="tfe-color-picker-h-picker-canvas" width="18" height="${this.CANVAS_SIZE}" />            
+                </div>
+                <form class="tfe-color-picker-input-root">
+                    <label for="h">h:</label>
+                    <input class="tfe-color-picker-h-input" name="h" type="number" min="0" max="360" step="1" value="${this.hsv.h.toFixed(0)}">
+    
+                    <label for="s">s:</label>
+                    <input class="tfe-color-picker-s-input" name="s" type="number" min="0" max="100" step="1" value="${(this.hsv.s * 100).toFixed(0)}">
+    
+                    <label for="v">v:</label>
+                    <input class="tfe-color-picker-v-input" name="v" type="number" min="0" max="100" step="1" value="${(this.hsv.v * 100).toFixed(0)}">
+    
+                    <div></div><div></div>    
+    
+                    <label for="r">r:</label>
+                    <input class="tfe-color-picker-r-input" name="r" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().r.toFixed(0)}">
+    
+                    <label for="g">g:</label>
+                    <input class="tfe-color-picker-g-input" name="g" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().g.toFixed(0)}">
+    
+                    <label for="b">b:</label>
+                    <input class="tfe-color-picker-b-input" name="b" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().b.toFixed(0)}">
+                    
+                    <div></div><div></div>    
+                    
+                    <label for="hex">hex:</label>
+                    <input class="tfe-color-picker-hex-input" name="hex" type="text" minlength="4" maxlength="9" value="${this.getHEX()}">
+                </form>
+            </div>        
+        `
 
-        const svPickerContainer = document.createElement("div");
-        svPickerContainer.classList.add("tfe-color-picker-sl-picker");
-        svPickerContainer.style.width = `${this.CANVAS_SIZE}px`;
-        svPickerContainer.style.height = `${this.CANVAS_SIZE}px`;
-        rootContainer.append(svPickerContainer);
-
-        this.svCanvas = document.createElement("canvas");
-        this.svCanvas.width = svPickerContainer.clientWidth;
-        this.svCanvas.height = svPickerContainer.clientHeight;
-
-        svPickerContainer.appendChild(this.svCanvas);
+        this.svCanvas = this.container.querySelector<HTMLCanvasElement>(".tfe-color-picker-sl-picker-canvas");
         this.svContext = this.svCanvas.getContext("2d", {alpha: false});
 
         this.drawSVPicker();
         this.addSVEventListener();
 
-        const hPickerContainer = document.createElement("div");
-        hPickerContainer.classList.add("tfe-color-picker-h-picker");
-        hPickerContainer.style.width = `24px`;
-        hPickerContainer.style.height = `${this.CANVAS_SIZE}px`;
-        hPickerContainer.style.paddingLeft = "12px";
-        rootContainer.append(hPickerContainer);
-
-        this.hCanvas = document.createElement("canvas");
-        this.hCanvas.width = hPickerContainer.clientWidth;
-        this.hCanvas.height = hPickerContainer.clientHeight;
-
-        hPickerContainer.appendChild(this.hCanvas);
+        this.hCanvas = this.container.querySelector<HTMLCanvasElement>(".tfe-color-picker-h-picker-canvas");
         this.hContext = this.hCanvas.getContext("2d", {alpha: false});
 
         this.drawHPicker();
         this.addHEventListener();
+        this.inputFiels = {
+            h: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-h-input"),
+            s: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-s-input"),
+            v: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-v-input"),
+            r: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-r-input"),
+            g: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-g-input"),
+            b: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-b-input"),
+            hex: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-hex-input"),
+        }
+
+        this.addInputEventListeners();
     }
 
     public setHEX(color: string) {
         this.hsv = d3HSV(color);
+        this.validateHue();
         this.drawAll();
     }
 
     public setRGB(r: number, g: number, b: number) {
         this.hsv = d3HSV(`rgb(${r * 255},${g * 255},${b * 255})`);
+        this.validateHue();
         this.drawAll();
     }
 
     public setRGBA(r: number, g: number, b: number, a: number) {
         this.hsv = d3HSV(`rgba(${r * 255},${g * 255},${b * 255},${1 - a})`);
+        this.validateHue();
         this.drawAll();
     }
 
     public setHSL(h: number, s: number, l: number) {
         this.hsv = d3HSV(`hsl(${h * 360} ${s * 100} ${l * 100})`);
+        this.validateHue();
         this.drawAll();
     }
 
     public setHSLA(h: number, s: number, l: number, a: number) {
         this.hsv = d3HSV(`hsla(${h * 360} ${s * 100} ${l * 100} ${1 - a})`);
+        this.validateHue();
         this.drawAll();
     }
 
     public setHSV(h: number, s: number, v: number) {
-        this.hsv = d3HSV(h, s, v);
+        this.validateHue();
         this.drawAll();
     }
 
     public setHSVA(h: number, s: number, v: number, a: number) {
-        this.hsv = d3HSV(h, s, v, 1 - a);
+        this.validateHue();
         this.drawAll();
     }
 
@@ -150,7 +230,7 @@ export class ColorPicker {
             this.svContext.fillRect(x, 0, 1, this.CANVAS_SIZE);
         }
 
-        this.svContext.strokeStyle = "white";
+        this.svContext.strokeStyle = "black";
         this.svContext.fillStyle = "transparent";
         const x = this.hsv.s * this.CANVAS_SIZE;
         const y = (1 - this.hsv.v) * this.CANVAS_SIZE;
@@ -161,21 +241,21 @@ export class ColorPicker {
     }
 
     private drawHPicker() {
-        const gradient = this.hContext.createLinearGradient(0, 0, 0, this.CANVAS_SIZE);
-        gradient.addColorStop(0, "#ff0000");
+        const gradient = this.hContext.createLinearGradient(0, 0, 0, this.hCanvas.height);
+        gradient.addColorStop(0 / 6, "#ff0000");
         gradient.addColorStop(1 / 6, "#ffff00");
-        gradient.addColorStop(1 / 3, "#00ff00");
-        gradient.addColorStop(1 / 2, "#00ffff");
-        gradient.addColorStop(2 / 3, "#0000ff");
+        gradient.addColorStop(2 / 6, "#00ff00");
+        gradient.addColorStop(3 / 6, "#00ffff");
+        gradient.addColorStop(4 / 6, "#0000ff");
         gradient.addColorStop(5 / 6, "#ff00ff");
-        gradient.addColorStop(1, "#ff0000");
+        gradient.addColorStop(6 / 6, "#ff0000");
         this.hContext.fillStyle = gradient;
         this.hContext.fillRect(0, 0, this.hCanvas.width, this.hCanvas.height);
 
         this.hContext.strokeStyle = "black";
         this.hContext.fillStyle = "transparent";
         const x = this.hCanvas.width / 2;
-        const y = (this.hsv.h / 360) * this.CANVAS_SIZE;
+        const y = (this.hsv.h / 360) * this.hCanvas.height;
         this.hContext.beginPath();
         this.hContext.arc(x, y, 5, 0, 2 * Math.PI);
         this.hContext.fill();
@@ -186,9 +266,12 @@ export class ColorPicker {
         let isDragging = false;
 
         const updateSV = (x, y) => {
-            this.hsv.s = x / this.CANVAS_SIZE;
-            this.hsv.v = 1 - y / this.CANVAS_SIZE;
+            this.hsv.s = clamp(x / this.CANVAS_SIZE, 0, 1);
+            this.hsv.v = clamp(1 - y / this.CANVAS_SIZE, 0, 1);
             this.drawSVPicker();
+            this.updateHSVInputFields();
+            this.updateRGBInputFields();
+            this.updateHEXInputField();
         }
 
         this.svCanvas.addEventListener("mousedown", (e) => {
@@ -202,7 +285,14 @@ export class ColorPicker {
             }
         })
 
-        this.svCanvas.addEventListener("mouseleave", (e) => isDragging = false);
+        this.svCanvas.addEventListener("mouseleave", (e) => {
+            if (isDragging) {
+                updateSV(e.offsetX, e.offsetY);
+            }
+
+            isDragging = false;
+        });
+
         this.svCanvas.addEventListener("mouseup", (e) => isDragging = false);
     }
 
@@ -210,8 +300,12 @@ export class ColorPicker {
         let isDragging = false;
 
         const updateH = (y) => {
-            this.hsv.h = (y / this.CANVAS_SIZE) * 360;
+            this.hsv.h = clamp(Math.round((y / this.CANVAS_SIZE) * 360), 0, 360);
+            this.backUpHue = this.hsv.h;
             this.drawAll();
+            this.inputFiels.h.valueAsNumber = Math.round(this.hsv.h);
+            this.updateRGBInputFields();
+            this.updateHEXInputField();
         }
 
         this.hCanvas.addEventListener("mousedown", (e) => {
@@ -225,13 +319,130 @@ export class ColorPicker {
             }
         })
 
-        this.hCanvas.addEventListener("mouseleave", (e) => isDragging = false);
+        this.hCanvas.addEventListener("mouseleave", (e) => {
+            if (isDragging) {
+                updateH(e.offsetY);
+            }
+
+            isDragging = false;
+        });
+
         this.hCanvas.addEventListener("mouseup", (e) => isDragging = false);
+    }
+
+    private addInputEventListeners() {
+        this.inputFiels.h.addEventListener("input", (ev: InputEvent) => {
+            const value = (ev.currentTarget as HTMLInputElement).valueAsNumber;
+            if (0 <= value && value <= 360) {
+                this.hsv.h = value;
+                this.backUpHue = this.hsv.h;
+                this.drawAll();
+                this.updateRGBInputFields();
+                this.updateHEXInputField();
+            }
+        });
+
+        this.inputFiels.s.addEventListener("input", (ev: InputEvent) => {
+            const value = (ev.currentTarget as HTMLInputElement).valueAsNumber;
+            if (0 <= value && value <= 100) {
+                this.hsv.s = value / 100;
+                this.drawSVPicker();
+                this.updateRGBInputFields();
+                this.updateHEXInputField();
+            }
+        });
+
+        this.inputFiels.v.addEventListener("input", (ev: InputEvent) => {
+            const value = (ev.currentTarget as HTMLInputElement).valueAsNumber;
+            if (0 <= value && value <= 100) {
+                this.hsv.v = value / 100;
+                this.drawSVPicker();
+                this.updateRGBInputFields();
+                this.updateHEXInputField();
+            }
+        });
+
+        this.inputFiels.r.addEventListener("input", (ev: InputEvent) => {
+            const value = (ev.currentTarget as HTMLInputElement).valueAsNumber;
+            if (0 <= value && value < 256) {
+                const oldRGB = this.hsv.rgb();
+                this.hsv = d3HSV(`rgba(${Math.round(value)},${Math.round(oldRGB.g)},${Math.round(oldRGB.b)},${oldRGB.opacity})`);
+                this.validateHue();
+                this.drawAll();
+                this.updateHSVInputFields();
+                this.updateHEXInputField();
+            }
+        });
+
+        this.inputFiels.g.addEventListener("input", (ev: InputEvent) => {
+            const value = (ev.currentTarget as HTMLInputElement).valueAsNumber;
+            if (0 <= value && value < 256) {
+                const oldRGB = this.hsv.rgb();
+                this.hsv = d3HSV(`rgba(${Math.round(oldRGB.r)},${Math.round(value)},${Math.round(oldRGB.b)},${oldRGB.opacity})`);
+                this.validateHue();
+                this.drawAll();
+                this.updateHSVInputFields();
+                this.updateHEXInputField();
+            }
+        });
+
+        this.inputFiels.b.addEventListener("input", (ev: InputEvent) => {
+            const value = (ev.currentTarget as HTMLInputElement).valueAsNumber;
+            if (0 <= value && value < 256) {
+                const oldRGB = this.hsv.rgb();
+                this.hsv = d3HSV(`rgba(${Math.round(oldRGB.r)},${Math.round(oldRGB.g)},${Math.round(value)},${oldRGB.opacity})`);
+                this.validateHue();
+                this.drawAll();
+                this.updateHSVInputFields();
+                this.updateHEXInputField();
+            }
+        });
+
+        this.inputFiels.hex.addEventListener("input", (ev: InputEvent) => {
+            const value = (ev.currentTarget as HTMLInputElement).value;
+            if (value.match(/#(?:[0-9a-fA-F]{3,4}){1,2}/)) {
+                this.hsv = d3HSV(value);
+                this.validateHue();
+                this.drawAll();
+                this.updateRGBInputFields();
+                this.updateHSVInputFields();
+            }
+        });
+    }
+
+    private updateHSVInputFields() {
+        this.inputFiels.h.valueAsNumber = clamp(Math.round(this.hsv.h), 0, 360);
+        this.inputFiels.s.valueAsNumber = clamp(Math.round(this.hsv.s * 100), 0, 100);
+        this.inputFiels.v.valueAsNumber = clamp(Math.round(this.hsv.v * 100), 0, 100);
+    }
+
+    private updateRGBInputFields() {
+        const rgb = this.hsv.rgb();
+        this.inputFiels.r.valueAsNumber = clamp(Math.round(rgb.r), 0, 255);
+        this.inputFiels.g.valueAsNumber = clamp(Math.round(rgb.g), 0, 255);
+        this.inputFiels.b.valueAsNumber = clamp(Math.round(rgb.b), 0, 255);
+    }
+
+    private updateHEXInputField() {
+        this.inputFiels.hex.value = this.getHEX();
+    }
+
+    private validateHue() {
+        if (Number.isNaN(this.hsv.h)) {
+            this.hsv.h = this.backUpHue;
+        } else {
+            this.backUpHue = this.hsv.h;
+        }
     }
 
     private formatHSVA(hsv: HSVColor): string {
         return d3HSL(hsv.toString()).formatHex8();
     }
+
+}
+
+function clamp(number, min, max): number {
+    return Math.max(min, Math.min(max, number));
 }
 
 interface RGB {
