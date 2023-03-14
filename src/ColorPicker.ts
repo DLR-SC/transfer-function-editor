@@ -24,6 +24,8 @@ export class ColorPicker {
         hex: HTMLInputElement
     };
 
+    private previewElement: HTMLDivElement;
+
     constructor(container: HTMLElement | string, showAlpha = false, initialColor: string = "#FFFFFF") {
         if (container) {
             if (typeof (container) === "string") {
@@ -75,6 +77,12 @@ export class ColorPicker {
                     align-content: space-evenly;
                     margin-left: 12px;
                 }
+                
+                .tfe-color-preview {
+                    grid-column: 1 / span 2;
+                    height: 50px;
+                    background: ${this.getHEX()};
+                }
             
                 .tfe-color-picker-input-root > label {
                     text-align: right;
@@ -93,6 +101,10 @@ export class ColorPicker {
                     <canvas class="tfe-color-picker-h-picker-canvas" width="18" height="${this.CANVAS_SIZE}" />            
                 </div>
                 <form class="tfe-color-picker-input-root">
+                    <div class="tfe-color-preview"></div>
+                    
+                    <div></div><div></div>    
+                    
                     <label for="h">h:</label>
                     <input class="tfe-color-picker-h-input" name="h" type="number" min="0" max="360" step="1" value="${this.hsv.h.toFixed(0)}">
     
@@ -141,8 +153,9 @@ export class ColorPicker {
             b: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-b-input"),
             hex: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-hex-input"),
         }
-
         this.addInputEventListeners();
+
+        this.previewElement = this.container.querySelector<HTMLDivElement>(".tfe-color-preview");
     }
 
     public onChange(callback: (newColor: Color) => void) {
@@ -150,11 +163,13 @@ export class ColorPicker {
     }
 
     private sendUpdate() {
+        const hex = this.getHEX();
+        this.previewElement.style.backgroundColor = hex;
+
         if (this.callback) {
             const rgb = this.getRGBA();
             const hsl = this.getHSLA();
             const hsv = this.getHSVA();
-            const hex = this.getHEX();
             this.callback({...rgb, ...hsl, ...hsv, hex});
         }
     }
