@@ -27,7 +27,7 @@ export class ColorPicker {
 
     private previewElement: HTMLDivElement;
 
-    constructor(container: HTMLElement | string, options: { initialColor?: string }) {
+    constructor(container: HTMLElement | string, options?: { initialColor?: string }) {
         if (container) {
             if (typeof (container) === "string") {
                 this.container = document.querySelector(container);
@@ -38,7 +38,7 @@ export class ColorPicker {
             throw "No element given!"
         }
 
-        this.hsv = d3HSV(options.initialColor || "#FFF");
+        this.hsv = d3HSV(options?.initialColor || "#FFF");
         if (Number.isNaN(this.hsv.h)) {
             this.hsv.h = 180;
         }

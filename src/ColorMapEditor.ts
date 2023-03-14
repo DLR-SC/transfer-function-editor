@@ -58,7 +58,7 @@ export class ColorMapEditor {
         this.colorPickerContainer.style.position = "relative";
         this.colorPickerContainer.style.bottom = `${this.canvas.height / 2}px`;
         this.container.appendChild(this.colorPickerContainer);
-        this.colorPicker = new ColorPicker(this.colorPickerContainer, false);
+        this.colorPicker = new ColorPicker(this.colorPickerContainer);
 
         this.draw();
         this.addEventListeners();
