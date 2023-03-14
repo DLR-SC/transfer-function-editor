@@ -3,7 +3,7 @@ import {hsv, hsv as d3HSV, HSVColor} from "d3-hsv";
 
 export class ColorPicker {
     private container: HTMLElement;
-    private showAlpha: boolean;
+    private showAlpha: boolean = false;
     private hsv: HSVColor;
     private backUpHue;
     private readonly svCanvas: HTMLCanvasElement;
@@ -11,6 +11,7 @@ export class ColorPicker {
     private readonly hCanvas: HTMLCanvasElement;
     private hContext: CanvasRenderingContext2D;
     private readonly CANVAS_SIZE: number = 256;
+    private controlPointSize: number = 7;
 
     private callback: (newColor: Color) => void;
 
@@ -26,7 +27,7 @@ export class ColorPicker {
 
     private previewElement: HTMLDivElement;
 
-    constructor(container: HTMLElement | string, showAlpha = false, initialColor: string = "#FFFFFF") {
+    constructor(container: HTMLElement | string, options: { initialColor?: string }) {
         if (container) {
             if (typeof (container) === "string") {
                 this.container = document.querySelector(container);
@@ -37,14 +38,13 @@ export class ColorPicker {
             throw "No element given!"
         }
 
-        this.hsv = d3HSV(initialColor);
+        this.hsv = d3HSV(options.initialColor || "#FFF");
         if (Number.isNaN(this.hsv.h)) {
             this.hsv.h = 180;
-        } else {
-            this.backUpHue = this.hsv.h;
         }
 
-        this.showAlpha = showAlpha;
+        this.backUpHue = this.hsv.h;
+
         this.container.classList.add("tfe-color-picker");
 
         this.container.innerHTML = `
@@ -82,6 +82,7 @@ export class ColorPicker {
                     grid-column: 1 / span 2;
                     height: 50px;
                     background: ${this.getHEX()};
+                    border: 1px solid grey;
                 }
             
                 .tfe-color-picker-input-root > label {
@@ -176,50 +177,50 @@ export class ColorPicker {
 
     public setHEX(color: string) {
         this.hsv = d3HSV(color);
-        this.sendUpdate();
         this.validateHue();
+        this.sendUpdate();
         this.drawAll();
     }
 
     public setRGB(r: number, g: number, b: number) {
         this.hsv = d3HSV(`rgb(${r * 255},${g * 255},${b * 255})`);
-        this.sendUpdate();
         this.validateHue();
+        this.sendUpdate();
         this.drawAll();
     }
 
     public setRGBA(r: number, g: number, b: number, a: number) {
         this.hsv = d3HSV(`rgba(${r * 255},${g * 255},${b * 255},${1 - a})`);
-        this.sendUpdate();
         this.validateHue();
+        this.sendUpdate();
         this.drawAll();
     }
 
     public setHSL(h: number, s: number, l: number) {
         this.hsv = d3HSV(`hsl(${h * 360} ${s * 100} ${l * 100})`);
-        this.sendUpdate();
         this.validateHue();
+        this.sendUpdate();
         this.drawAll();
     }
 
     public setHSLA(h: number, s: number, l: number, a: number) {
         this.hsv = d3HSV(`hsla(${h * 360} ${s * 100} ${l * 100} ${1 - a})`);
-        this.sendUpdate();
         this.validateHue();
+        this.sendUpdate();
         this.drawAll();
     }
 
     public setHSV(h: number, s: number, v: number) {
         this.hsv = d3HSV(h, s, v);
-        this.sendUpdate();
         this.validateHue();
+        this.sendUpdate();
         this.drawAll();
     }
 
     public setHSVA(h: number, s: number, v: number, a: number) {
         this.hsv = d3HSV(h, s, v, 1 - a);
-        this.sendUpdate();
         this.validateHue();
+        this.sendUpdate();
         this.drawAll();
     }
 
@@ -270,14 +271,16 @@ export class ColorPicker {
             this.svContext.fillRect(x, 0, 1, this.CANVAS_SIZE);
         }
 
-        this.svContext.strokeStyle = "black";
-        this.svContext.fillStyle = "transparent";
         const x = this.hsv.s * this.CANVAS_SIZE;
         const y = (1 - this.hsv.v) * this.CANVAS_SIZE;
-        this.svContext.beginPath();
-        this.svContext.arc(x, y, 5, 0, 2 * Math.PI);
-        this.svContext.fill();
-        this.svContext.stroke();
+        const strokes = 10;
+        for (let i = 0; i < strokes; i++) {
+            this.svContext.beginPath();
+            this.svContext.strokeStyle = i % 2 === 0 ? "white" : "black";
+            this.svContext.arc(x, y, this.controlPointSize, (i / strokes) * (2 * Math.PI), ((i + 1) / strokes) * (2 * Math.PI));
+            this.svContext.stroke();
+        }
+
     }
 
     private drawHPicker() {
@@ -292,14 +295,16 @@ export class ColorPicker {
         this.hContext.fillStyle = gradient;
         this.hContext.fillRect(0, 0, this.hCanvas.width, this.hCanvas.height);
 
-        this.hContext.strokeStyle = "black";
-        this.hContext.fillStyle = "transparent";
         const x = this.hCanvas.width / 2;
         const y = (this.hsv.h / 360) * this.hCanvas.height;
-        this.hContext.beginPath();
-        this.hContext.arc(x, y, 5, 0, 2 * Math.PI);
-        this.hContext.fill();
-        this.hContext.stroke();
+
+        const strokes = 10;
+        for (let i = 0; i < strokes; i++) {
+            this.hContext.beginPath();
+            this.hContext.strokeStyle = i % 2 === 0 ? "white" : "black";
+            this.hContext.arc(x, y, this.controlPointSize, (i / strokes) * (2 * Math.PI), ((i + 1) / strokes) * (2 * Math.PI));
+            this.hContext.stroke();
+        }
     }
 
     private addSVEventListener() {
@@ -309,6 +314,7 @@ export class ColorPicker {
             this.hsv.s = clamp(x / this.CANVAS_SIZE, 0, 1);
             this.hsv.v = clamp(1 - y / this.CANVAS_SIZE, 0, 1);
             this.sendUpdate();
+
             this.drawSVPicker();
             this.updateHSVInputFields();
             this.updateRGBInputFields();
@@ -524,4 +530,4 @@ interface HSVA extends HSV {
     a: number;
 }
 
-type Color = RGBA & HSLA & HSVA & {hex: string};
+type Color = RGBA & HSLA & HSVA & { hex: string };

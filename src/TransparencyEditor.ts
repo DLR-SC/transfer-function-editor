@@ -13,14 +13,13 @@ export class TransparencyEditor {
 
     private colorRange: d3Scale.ScaleLinear<string, string>;
     private colorMap: Array<ColorStop> = [
-        {stop: 0, rgb: 'blue'},
-        {stop: 0.5, rgb: 'white'},
-        {stop: 1, rgb: 'red'}
+        {stop: 0, rgb: 'black'},
+        {stop: 1, rgb: 'black'}
     ];
 
     private isDragging: boolean = false;
     private dragIndex: number = -1;
-    private controlPointSize: number = 5;
+    private controlPointSize: number = 7;
 
 
     constructor(container: HTMLElement | string, transferFunction: Array<AlphaStop> = [
@@ -93,8 +92,10 @@ export class TransparencyEditor {
         }
     }
 
-    public moveControlPointTo(): void {
-
+    public setAlphaStops(alphaStops: Array<AlphaStop>) {
+        this.controlPoints = alphaStops;
+        this.updateAlphaRange();
+        this.draw();
     }
 
     public setColorMap(colorMap: Array<ColorStop>) {
@@ -107,7 +108,7 @@ export class TransparencyEditor {
         this.colorRange = d3Scale.scaleLinear<string, number>()
             .domain(this.colorMap.map(entry => entry.stop))
             .range(this.colorMap.map(entry => entry.rgb))
-            .interpolate(d3Interpolate.interpolateRgb)
+            .interpolate(d3Interpolate.interpolateHslLong)
     }
 
     private updateAlphaRange() {
@@ -147,6 +148,7 @@ export class TransparencyEditor {
         for (let i = 0; i < this.controlPoints.length; i++) {
             const x = this.controlPoints[i].stop * this.canvas.width;
             const y = this.controlPoints[i].alpha * this.canvas.height;
+            this.ctx.strokeStyle = "black";
             this.ctx.beginPath();
             this.ctx.arc(x, y, this.controlPointSize, 0, 2 * Math.PI);
             this.ctx.fill();
