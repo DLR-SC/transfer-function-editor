@@ -9,6 +9,11 @@ export interface ColorStop {
     rgb: string;
 }
 
+export interface TransferFunction {
+    alphaStops: Array<AlphaStop>;
+    colorMap: Array<ColorStop>;
+}
+
 /**
  * This is for compatibility with ParaViews transfer functions.
  */

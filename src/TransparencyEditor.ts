@@ -1,4 +1,4 @@
-import {AlphaStop, ColorStop} from "./Types";
+import {AlphaStop, ColorStop, TransferFunction} from "./Types";
 import * as d3Scale from "d3-scale";
 import * as d3Color from "d3-color";
 import * as d3Interpolate from "d3-interpolate";
@@ -20,6 +20,8 @@ export class TransparencyEditor {
     private isDragging: boolean = false;
     private dragIndex: number = -1;
     private controlPointSize: number = 7;
+
+    private callback: (transferFunction: TransferFunction) => void;
 
 
     constructor(container: HTMLElement | string, transferFunction: Array<AlphaStop> = [
@@ -52,6 +54,10 @@ export class TransparencyEditor {
         this.addEventListeners();
     }
 
+    public onUpdate(callback: (transferFunction: TransferFunction) => void) {
+        this.callback = callback;
+    }
+
     public getRGB(stop: number): string {
         return this.colorRange(stop);
     }
@@ -71,6 +77,7 @@ export class TransparencyEditor {
         this.controlPoints.push({stop, alpha});
         this.sortControlPoints();
         this.updateAlphaRange();
+        this.sendUpdate();
         this.draw();
     }
 
@@ -88,6 +95,7 @@ export class TransparencyEditor {
         if (indexToDelete !== -1) {
             this.controlPoints.splice(indexToDelete, 1);
             this.updateAlphaRange();
+            this.sendUpdate();
             this.draw();
         }
     }
@@ -95,13 +103,25 @@ export class TransparencyEditor {
     public setAlphaStops(alphaStops: Array<AlphaStop>) {
         this.controlPoints = alphaStops;
         this.updateAlphaRange();
+        this.sendUpdate();
         this.draw();
+    }
+
+    public getAlphaStops(): Array<AlphaStop> {
+        return this.controlPoints;
     }
 
     public setColorMap(colorMap: Array<ColorStop>) {
         this.colorMap = colorMap;
         this.updateColorRange();
+        this.sendUpdate();
         this.draw();
+    }
+
+    private sendUpdate() {
+        if (this.callback) {
+            this.callback({alphaStops: this.controlPoints, colorMap: this.colorMap});
+        }
     }
 
     private updateColorRange() {
@@ -213,6 +233,7 @@ export class TransparencyEditor {
                 }
                 this.sortControlPoints();
                 this.updateAlphaRange();
+                this.sendUpdate();
                 this.draw();
             }
         });
@@ -242,6 +263,7 @@ export class TransparencyEditor {
 
                 this.sortControlPoints();
                 this.updateAlphaRange();
+                this.sendUpdate();
                 this.draw();
             }
         });

@@ -1,6 +1,6 @@
 import {ColorMapEditor} from "./ColorMapEditor";
 import {TransparencyEditor} from "./TransparencyEditor";
-import {AlphaStop, ColorStop} from "./Types";
+import {AlphaStop, ColorStop, TransferFunction} from "./Types";
 
 export class TransferFunctionEditor {
     private container: HTMLElement;
@@ -8,6 +8,8 @@ export class TransferFunctionEditor {
     private transparencyEditor: TransparencyEditor;
 
     private colorMapEditor: ColorMapEditor;
+
+    private callback: (transferFunction: TransferFunction) => void = null;
 
     constructor(container: HTMLElement | string) {
         if (container) {
@@ -37,6 +39,12 @@ export class TransferFunctionEditor {
         this.colorMapEditor.onUpdate((colorMap) => this.transparencyEditor.setColorMap(colorMap));
 
         this.transparencyEditor.setColorMap(this.colorMapEditor.getColorMap());
+
+        this.transparencyEditor.onUpdate((tf) => {
+            if (this.callback) {
+                this.callback(tf);
+            }
+        });
     }
 
     public setAlphaStops(alphaStops: Array<AlphaStop>) {
@@ -45,6 +53,14 @@ export class TransferFunctionEditor {
 
     public setColorMap(colorMap: Array<ColorStop>) {
         this.colorMapEditor.setColorMap(colorMap);
+    }
+
+    public getAlphaStops(): Array<AlphaStop> {
+        return this.transparencyEditor.getAlphaStops();
+    }
+
+    public getColorMap(): Array<ColorStop> {
+        return this.colorMapEditor.getColorMap();
     }
 }
 

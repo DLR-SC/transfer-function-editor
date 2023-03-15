@@ -59,12 +59,14 @@ export class ColorPicker {
                 .tfe-color-picker-sl-picker {
                     width: ${this.CANVAS_SIZE}px;
                     height: ${this.CANVAS_SIZE}px;
+                    border: 1px solid grey;
                 }
                 
                 .tfe-color-picker-h-picker {
                     width: 18px;
                     height: ${this.CANVAS_SIZE}px;
                     margin-left: 12px;
+                    border: 1px solid grey;
                 }
             
                 .tfe-color-picker-input-root {

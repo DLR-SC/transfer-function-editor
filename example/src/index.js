@@ -3,7 +3,7 @@ import {
     TransparencyEditor,
     ColorMapEditor,
     ColorPicker
-} from '../../dist/transfer-function-editor'
+} from '../../dist/transfer-function-editor.module'
 
 const tf = new TransferFunctionEditor('#tf');
 
