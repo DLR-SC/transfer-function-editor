@@ -52,8 +52,8 @@ export class ColorMapEditor {
 
     this.colorPickerContainer = document.createElement('div');
     this.colorPickerContainer.classList.add('tfe-color-map-editor-color-picker-container');
-    this.colorPickerContainer.style.width = '450px';
-    this.colorPickerContainer.style.height = '275px';
+    this.colorPickerContainer.style.width = 'fit-content';
+    this.colorPickerContainer.style.padding = '12px';
     this.colorPickerContainer.style.backgroundColor = 'white';
     this.colorPickerContainer.style.border = '1px solid black';
     this.colorPickerContainer.style.visibility = 'hidden';
@@ -77,8 +77,9 @@ export class ColorMapEditor {
     return this.colorMap;
   }
 
-  public onUpdate(callback: (colorMap: Array<ColorStop>) => void) {
+  public onChange(callback: (colorMap: Array<ColorStop>) => void) {
     this.callback = callback;
+    this.callback(this.colorMap);
   }
 
   private draw() {

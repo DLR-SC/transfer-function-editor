@@ -36,15 +36,20 @@ export class TransferFunctionEditor {
     this.container.append(colorMapEditorElement);
     this.colorMapEditor = new ColorMapEditor(colorMapEditorElement);
 
-    this.colorMapEditor.onUpdate((colorMap) => this.transparencyEditor.setColorMap(colorMap));
+    this.colorMapEditor.onChange((colorMap) => this.transparencyEditor.setColorMap(colorMap));
 
     this.transparencyEditor.setColorMap(this.colorMapEditor.getColorMap());
 
-    this.transparencyEditor.onUpdate((tf) => {
+    this.transparencyEditor.onChange((tf) => {
       if (this.callback) {
         this.callback(tf);
       }
     });
+  }
+
+  public onChange(callback: (transferFunction: TransferFunction) => void) {
+    this.callback = callback;
+    this.callback(this.transparencyEditor.getTransferFunction());
   }
 
   public setAlphaStops(alphaStops: Array<AlphaStop>) {

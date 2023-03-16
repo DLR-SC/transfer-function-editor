@@ -1,6 +1,54 @@
 import {hsl as d3HSL, rgb as d3RGB} from 'd3-color';
 import {hsv, hsv as d3HSV, HSVColor} from 'd3-hsv';
 
+document.head.innerHTML += `<style>
+    .tfe-color-picker-root {
+        display: flex;
+        justify-content: center;
+    }
+
+    .tfe-color-picker-sl-picker {
+        border: 1px solid grey;
+    }
+
+    .tfe-color-picker-h-picker {
+        width: 18px;
+        margin-left: 12px;
+        border: 1px solid grey;
+    }
+
+    .tfe-color-picker-input-root {
+        display: grid;
+        grid-template-columns: 36px 60px;
+        grid-template-rows: repeat(3, auto) 20px repeat(3, auto) 20px auto;
+        grid-column-gap: 6px;
+        grid-row-gap: 6px;
+        align-items: center;
+        align-content: space-evenly;
+        margin-left: 12px;
+        margin-bottom: 0;
+    }
+
+    .tfe-color-preview {
+        grid-column: 1 / span 2;
+        height: 50px;
+        border: 1px solid grey;
+    }
+
+    .tfe-color-picker-input-root > label {
+        text-align: right;
+    }
+
+    .tfe-color-picker-input-root > input {
+        text-align: right;
+        font-family: monospace;
+    }
+
+    .tfe-color-picker-input-hex-invalid:focus-visible {
+        outline-color: red;
+    }
+</style>`;
+
 export class ColorPicker {
   private container: HTMLElement;
   private hsv: HSVColor;
@@ -53,112 +101,47 @@ export class ColorPicker {
     this.container.classList.add('tfe-color-picker');
 
     this.container.innerHTML = `
-            <style>
-                .tfe-color-picker-root {
-                    width: 100%;
-                    height: 100%;
-                    display: flex;
-                    margin: 12px;
-                }
-                
-                .tfe-color-picker-sl-picker {
-                    width: ${this.CANVAS_SIZE}px;
-                    height: ${this.CANVAS_SIZE}px;
-                    border: 1px solid grey;
-                }
-                
-                .tfe-color-picker-h-picker {
-                    width: 18px;
-                    height: ${this.CANVAS_SIZE}px;
-                    margin-left: 12px;
-                    border: 1px solid grey;
-                }
-            
-                .tfe-color-picker-input-root {
-                    display: grid;
-                    grid-template-columns: 36px 60px;
-                    grid-template-rows: repeat(3, auto) 20px repeat(3, auto) 20px auto;
-                    grid-column-gap: 6px;
-                    grid-row-gap: 6px;
-                    align-items: center;
-                    align-content: space-evenly;
-                    margin-left: 12px;
-                }
-                
-                .tfe-color-preview {
-                    grid-column: 1 / span 2;
-                    height: 50px;
-                    background: ${this.getHEX()};
-                    border: 1px solid grey;
-                }
-            
-                .tfe-color-picker-input-root > label {
-                    text-align: right;
-                } 
-                
-                .tfe-color-picker-input-root > input {
-                    text-align: right;
-                    font-family: monospace;
-                }
-                
-                .tfe-color-picker-input-hex-invalid:focus-visible {
-                    outline-color: red;                
-                } 
-            </style>
-            <div class="tfe-color-picker-root">
-                <div class="tfe-color-picker-sl-picker">
-                    <canvas class="tfe-color-picker-sl-picker-canvas" width="${this.CANVAS_SIZE}" height="${
-      this.CANVAS_SIZE
-    }" />
-                </div>
-                <div class="tfe-color-picker-h-picker">
-                    <canvas class="tfe-color-picker-h-picker-canvas" width="18" height="${
-                      this.CANVAS_SIZE
-                    }" />            
-                </div>
-                <form class="tfe-color-picker-input-root">
-                    <div class="tfe-color-preview"></div>
-                    
-                    <div></div><div></div>    
-                    
-                    <label for="h">h:</label>
-                    <input class="tfe-color-picker-h-input" name="h" type="number" min="0" max="360" step="1" value="${this.hsv.h.toFixed(
-                      0
-                    )}">
-    
-                    <label for="s">s:</label>
-                    <input class="tfe-color-picker-s-input" name="s" type="number" min="0" max="100" step="1" value="${(
-                      this.hsv.s * 100
-                    ).toFixed(0)}">
-    
-                    <label for="v">v:</label>
-                    <input class="tfe-color-picker-v-input" name="v" type="number" min="0" max="100" step="1" value="${(
-                      this.hsv.v * 100
-                    ).toFixed(0)}">
-    
-                    <div></div><div></div>    
-    
-                    <label for="r">r:</label>
-                    <input class="tfe-color-picker-r-input" name="r" type="number" min="0" max="255" step="1" value="${this.hsv
-                      .rgb()
-                      .r.toFixed(0)}">
-    
-                    <label for="g">g:</label>
-                    <input class="tfe-color-picker-g-input" name="g" type="number" min="0" max="255" step="1" value="${this.hsv
-                      .rgb()
-                      .g.toFixed(0)}">
-    
-                    <label for="b">b:</label>
-                    <input class="tfe-color-picker-b-input" name="b" type="number" min="0" max="255" step="1" value="${this.hsv
-                      .rgb()
-                      .b.toFixed(0)}">
-                    
-                    <div></div><div></div>    
-                    
-                    <label for="hex">hex:</label>
-                    <input class="tfe-color-picker-hex-input" name="hex" type="text" minlength="4" maxlength="7" value="${this.getHEX()}">
-                </form>
-            </div>        
+<div class="tfe-color-picker-root">
+  <div class="tfe-color-picker-sl-picker" style="width: ${this.CANVAS_SIZE}px; height: ${this.CANVAS_SIZE}px">
+    <canvas class="tfe-color-picker-sl-picker-canvas" width="${this.CANVAS_SIZE}" height="${this.CANVAS_SIZE}" />
+  </div>
+  <div class="tfe-color-picker-h-picker"  style="height: ${this.CANVAS_SIZE}px">
+    <canvas class="tfe-color-picker-h-picker-canvas" width="18" height="${this.CANVAS_SIZE}" />
+  </div>
+  <form class="tfe-color-picker-input-root">
+    <div class="tfe-color-preview" style="background: ${this.getHEX()}"></div>
+
+    <div></div>
+    <div></div>
+
+    <label for="h">h:</label>
+    <input class="tfe-color-picker-h-input" name="h" type="number" min="0" max="360" step="1" value="${this.hsv.h.toFixed(0)}">
+
+    <label for="s">s:</label>
+    <input class="tfe-color-picker-s-input" name="s" type="number" min="0" max="100" step="1" value="${(this.hsv.s * 100).toFixed(0)}">
+
+    <label for="v">v:</label>
+    <input class="tfe-color-picker-v-input" name="v" type="number" min="0" max="100" step="1" value="${(this.hsv.v * 100).toFixed(0)}">
+
+    <div></div>
+    <div></div>
+
+    <label for="r">r:</label>
+    <input class="tfe-color-picker-r-input" name="r" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().r.toFixed(0)}">
+
+    <label for="g">g:</label>
+    <input class="tfe-color-picker-g-input" name="g" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().g.toFixed(0)}">
+
+    <label for="b">b:</label>
+    <input class="tfe-color-picker-b-input" name="b" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().b.toFixed(0)}">
+
+    <div></div>
+    <div></div>
+
+    <label for="hex">hex:</label>
+    <input class="tfe-color-picker-hex-input" name="hex" type="text" minlength="4" maxlength="7" value="${this.getHEX()}">
+  </form>
+</div>        
         `;
 
     this.svCanvas = this.container.querySelector<HTMLCanvasElement>('.tfe-color-picker-sl-picker-canvas');
@@ -188,6 +171,10 @@ export class ColorPicker {
 
   public onChange(callback: (newColor: Color) => void) {
     this.callback = callback;
+    const rgb = this.getRGB();
+    const hsl = this.getHSL();
+    const hsv = this.getHSV();
+    this.callback({rgb, hsl, hsv, hex: this.getHEX()});
   }
 
   private sendUpdate() {
@@ -198,7 +185,7 @@ export class ColorPicker {
       const rgb = this.getRGB();
       const hsl = this.getHSL();
       const hsv = this.getHSV();
-      this.callback({...rgb, ...hsl, ...hsv, hex});
+      this.callback({rgb, hsl, hsv, hex});
     }
   }
 
@@ -682,4 +669,9 @@ interface HSV {
   v: number;
 }
 
-type Color = RGB & HSL & HSV & {hex: string};
+interface Color {
+  rgb: RGB;
+  hsl: HSL;
+  hsv: HSV;
+  hex: string;
+}

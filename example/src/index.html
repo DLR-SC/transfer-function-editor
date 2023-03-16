@@ -1,63 +1,115 @@
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>TransferFunctionEditor</title>
-    <style>
-        body {
-            font-family: 'Arial', 'SansSerif', monospace;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-        }
+  <meta charset="utf-8">
+  <title>TransferFunctionEditor</title>
+  <style>
+      body {
+          font-family: 'Arial', 'SansSerif', monospace;
+          margin: 0;
+          padding: 0;
+          text-align: center;
+          background: beige;
+      }
 
-        h1 {
-            font-weight: normal;
-            margin-top: 5%;
-        }
+      h1 {
+          font-weight: normal;
+      }
 
-        #root {
-            display: flex;
-            flex: 1;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+      hr {
+          margin-top: 50px;
+          margin-bottom: 25px;
+          width: 80%;
+          color: gray;
+      }
 
-        #tf {
-            width: 500px;
-        }
+      #root {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 5%;
+      }
 
-        #tp {
-            width: 500px;
-        }
+      .section {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-evenly;
+          width: 80%;
+      }
 
-        #cm {
-            width: 500px;
-        }
+      #tf-editor {
+          width: 500px;
+          height: 100%;
+      }
 
-        .tfe-transparency-editor {
-            height: 200px;
-            border: 1px solid black;
-        }
+      .preview {
+          text-align: left;
+          max-height: 350px;
+          width: 500px;
+          overflow-y: auto;
+          background: #2b2d30;
+          color: wheat;
+          padding: 10px;
+          border: 2px solid gray;
+      }
 
-        .tfe-color-map-editor {
-            margin-top: 10px;
+      #tp {
+          width: 500px;
+      }
 
-            height: 40px;
-            border: 1px solid black;
-        }
+      #cm {
+          width: 500px;
+      }
 
-    </style>
+      #cp {
+          width: 500px;
+      }
+
+      .tfe-transparency-editor {
+          height: 200px;
+          border: 1px solid black;
+      }
+
+      .tfe-color-map-editor {
+          margin-top: 10px;
+
+          height: 40px;
+          border: 1px solid black;
+      }
+  </style>
 <body>
 <div id="root">
-    <h1>Transfer Function Editor</h1>
-    <div id="tf"></div>
-    <h1>Transparency Editor</h1>
+  <h1>Transfer Function Editor</h1>
+  <div class="section">
+    <div id="tf-editor"></div>
+    <pre id="tf-output" class="preview"></pre>
+  </div>
+
+  <hr>
+
+  <h1>Transparency Editor</h1>
+  <div class="section">
     <div id="tp"></div>
-    <h1>Color Map Editor</h1>
+    <pre id="tp-output" class="preview"></pre>
+  </div>
+
+  <hr>
+
+  <h1>Color Map Editor</h1>
+  <div class="section">
     <div id="cm"></div>
-    <h1>Color Picker</h1>
+    <pre id="cm-output" class="preview"></pre>
+  </div>
+
+  <hr>
+
+  <h1>Color Picker</h1>
+  <div class="section">
     <div id="cp"></div>
+    <pre id="cp-output" class="preview"></pre>
+  </div>
 </div>
 <script type="module" src="./index.js"></script>
 </body>

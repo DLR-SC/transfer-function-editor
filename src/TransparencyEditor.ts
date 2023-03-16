@@ -56,8 +56,13 @@ export class TransparencyEditor {
     this.addEventListeners();
   }
 
-  public onUpdate(callback: (transferFunction: TransferFunction) => void) {
+  public onChange(callback: (transferFunction: TransferFunction) => void) {
     this.callback = callback;
+    this.callback(this.getTransferFunction());
+  }
+
+  public getTransferFunction(): TransferFunction {
+    return {alphaStops: this.controlPoints, colorMap: this.colorMap};
   }
 
   public getRGB(stop: number): string {
