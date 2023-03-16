@@ -150,6 +150,7 @@ export class ColorMapEditor {
         checkDragStart(e);
       } else if (e.button === 1) {
         // Middle click
+        e.preventDefault();
         let indexToDelete = -1;
         for (let i = 1; i < this.colorMap.length - 1; i++) {
           const stop = this.colorMap[i];

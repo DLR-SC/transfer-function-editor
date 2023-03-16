@@ -227,6 +227,7 @@ export class TransparencyEditor {
         checkDragStart(e);
       } else if (e.button === 1) {
         // Middle click
+        e.preventDefault();
         this.removeControlPointAt(e.offsetX, e.offsetY);
       }
     });
