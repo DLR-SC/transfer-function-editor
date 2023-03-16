@@ -1,20 +1,27 @@
 {
-    "ts-node": {
-        "transpileOnly": true,
-        "compilerOptions": {
-            "module": "commonjs",
-            "sourceMap": true
-        },
-        "include": ["test/**/*"]
-    },
+  "ts-node": {
+    "transpileOnly": true,
     "compilerOptions": {
-        "target": "ESNext",
-        "module": "ESNext",
-        "noEmit": true,
-        "declaration": true,
-        "moduleResolution": "node",
-        "esModuleInterop": true
+      "module": "commonjs",
+      "sourceMap": true
     },
-    "include": ["@types/**/*", "src/**/*"],
-    "exclude": ["node_modules"]
+    "include": [
+      "test/**/*"
+    ]
+  },
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "noEmit": true,
+    "declaration": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true
+  },
+  "include": [
+    "@types/**/*",
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

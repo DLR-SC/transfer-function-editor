@@ -7,9 +7,19 @@
   "unpkg": "dist/transfer-function-editor.umd.js",
   "amdName": "TransferFunctionEditor",
   "scripts": {
-    "build": "microbundle"
+    "build": "microbundle build",
+    "watch": "microbundle watch",
+    "format": "prettier --write ./src"
   },
-  "keywords": ["transfer function", "tf", "transparency", "color", "d3", "interpolation", "paraview"],
+  "keywords": [
+    "transfer function",
+    "tf",
+    "transparency",
+    "color",
+    "d3",
+    "interpolation",
+    "paraview"
+  ],
   "author": "DLR",
   "license": "MIT",
   "dependencies": {
@@ -25,6 +35,7 @@
     "@types/d3-scale": "^3.3.2",
     "microbundle": "^0.13.0",
     "typescript": "^4.9.5",
-    "ts-node": "^10.0.0"
+    "ts-node": "^10.0.0",
+    "prettier": "^2.8.4"
   }
 }
