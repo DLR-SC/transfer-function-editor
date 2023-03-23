@@ -299,6 +299,7 @@ export class ColorPicker {
 
   private addSVEventListener() {
     let isDragging = false;
+    let abortController: AbortController = null;
 
     const updateSV = (x, y) => {
       this.hsv.s = clamp(x / this.CANVAS_SIZE, 0, 1);
@@ -313,29 +314,28 @@ export class ColorPicker {
     };
 
     this.svCanvas.addEventListener('mousedown', (e) => {
+      abortController = new AbortController();
+      document.addEventListener('mousemove', (e) => {
+        e.preventDefault();
+        updateSV(e.clientX - this.svCanvas.getBoundingClientRect().x, e.clientY - this.svCanvas.getBoundingClientRect().y);
+      }, {signal: abortController.signal});
+
       isDragging = true;
       updateSV(e.offsetX, e.offsetY);
     });
 
-    this.svCanvas.addEventListener('mousemove', (e) => {
-      if (isDragging) {
-        updateSV(e.offsetX, e.offsetY);
+    document.addEventListener('mouseup', (e) => {
+      if (isDragging && abortController) {
+        abortController.abort();
+        abortController = null;
+        isDragging = false;
       }
     });
-
-    this.svCanvas.addEventListener('mouseleave', (e) => {
-      if (isDragging) {
-        updateSV(e.offsetX, e.offsetY);
-      }
-
-      isDragging = false;
-    });
-
-    this.svCanvas.addEventListener('mouseup', (e) => (isDragging = false));
   }
 
   private addHEventListener() {
     let isDragging = false;
+    let abortController: AbortController = null;
 
     const updateH = (y) => {
       this.hsv.h = clamp(Math.round((y / this.CANVAS_SIZE) * 360), 0, 360);
@@ -348,25 +348,24 @@ export class ColorPicker {
     };
 
     this.hCanvas.addEventListener('mousedown', (e) => {
+      abortController = new AbortController();
+      document.addEventListener('mousemove', (e) => {
+        e.preventDefault();
+        updateH(e.clientY - this.svCanvas.getBoundingClientRect().y);
+      }, {signal: abortController.signal});
+
+
       isDragging = true;
       updateH(e.offsetY);
     });
 
-    this.hCanvas.addEventListener('mousemove', (e) => {
-      if (isDragging) {
-        updateH(e.offsetY);
+    document.addEventListener('mouseup', (e) => {
+      if (isDragging && abortController) {
+        abortController.abort();
+        abortController = null;
+        isDragging = false;
       }
     });
-
-    this.hCanvas.addEventListener('mouseleave', (e) => {
-      if (isDragging) {
-        updateH(e.offsetY);
-      }
-
-      isDragging = false;
-    });
-
-    this.hCanvas.addEventListener('mouseup', (e) => (isDragging = false));
   }
 
   private addInputEventListeners() {

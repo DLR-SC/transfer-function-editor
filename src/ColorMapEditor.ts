@@ -1,7 +1,7 @@
-import * as d3Scale from 'd3-scale';
-import {ColorStop} from './Types';
-import * as d3Interpolate from 'd3-interpolate';
-import {ColorPicker} from './ColorPicker';
+import * as d3Scale from "d3-scale";
+import { ColorStop } from "./Types";
+import * as d3Interpolate from "d3-interpolate";
+import { ColorPicker } from "./ColorPicker";
 
 export class ColorMapEditor {
   private container: HTMLElement;
@@ -11,53 +11,52 @@ export class ColorMapEditor {
 
   private colorMap: Array<ColorStop>;
 
-  private isDragging: boolean = false;
-  private dragIndex: number = -1;
   private controlPointSize: number = 7;
 
   private colorPickerContainer: HTMLDivElement;
   private colorPicker: ColorPicker;
 
-  private callback: (colorMap: Array<ColorStop>) => void = () => {};
+  private callback: (colorMap: Array<ColorStop>) => void = () => {
+  };
 
   constructor(
     container: HTMLElement | string,
     colorMap: Array<ColorStop> = [
-      {stop: 0, rgb: 'blue'},
-      {stop: 0.5, rgb: 'white'},
-      {stop: 1, rgb: 'red'},
+      { stop: 0, rgb: "blue" },
+      { stop: 0.5, rgb: "white" },
+      { stop: 1, rgb: "red" }
     ]
   ) {
     if (container) {
-      if (typeof container === 'string') {
+      if (typeof container === "string") {
         this.container = document.querySelector(container);
       } else {
         this.container = container;
       }
     } else {
-      throw 'No element given!';
+      throw "No element given!";
     }
 
-    this.container.classList.add('tfe-color-map-editor');
+    this.container.classList.add("tfe-color-map-editor");
 
     this.colorMap = colorMap;
     this.updateColorRange();
 
-    this.canvas = document.createElement('canvas');
+    this.canvas = document.createElement("canvas");
     this.canvas.width = this.container.clientWidth;
     this.canvas.height = this.container.clientHeight;
 
     this.container.appendChild(this.canvas);
-    this.ctx = this.canvas.getContext('2d', {alpha: false});
+    this.ctx = this.canvas.getContext("2d", { alpha: false });
 
-    this.colorPickerContainer = document.createElement('div');
-    this.colorPickerContainer.classList.add('tfe-color-map-editor-color-picker-container');
-    this.colorPickerContainer.style.width = 'fit-content';
-    this.colorPickerContainer.style.padding = '12px';
-    this.colorPickerContainer.style.backgroundColor = 'white';
-    this.colorPickerContainer.style.border = '1px solid black';
-    this.colorPickerContainer.style.visibility = 'hidden';
-    this.colorPickerContainer.style.position = 'relative';
+    this.colorPickerContainer = document.createElement("div");
+    this.colorPickerContainer.classList.add("tfe-color-map-editor-color-picker-container");
+    this.colorPickerContainer.style.width = "fit-content";
+    this.colorPickerContainer.style.padding = "12px";
+    this.colorPickerContainer.style.backgroundColor = "white";
+    this.colorPickerContainer.style.border = "1px solid black";
+    this.colorPickerContainer.style.visibility = "hidden";
+    this.colorPickerContainer.style.position = "relative";
     this.colorPickerContainer.style.bottom = `${this.canvas.height / 2}px`;
     this.container.appendChild(this.colorPickerContainer);
     this.colorPicker = new ColorPicker(this.colorPickerContainer);
@@ -88,14 +87,14 @@ export class ColorMapEditor {
       this.ctx.fillRect(i, 0, 1, this.canvas.height);
     }
 
-    this.ctx.fillStyle = 'transparent';
+    this.ctx.fillStyle = "transparent";
     for (let i = 0; i < this.colorMap.length; i++) {
       const x = this.colorMap[i].stop * this.canvas.width;
       const y = 0.5 * this.canvas.height;
       const strokes = 10;
       for (let i = 0; i < strokes; i++) {
         this.ctx.beginPath();
-        this.ctx.strokeStyle = i % 2 === 0 ? 'white' : 'black';
+        this.ctx.strokeStyle = i % 2 === 0 ? "white" : "black";
         this.ctx.arc(x, y, this.controlPointSize, (i / strokes) * (2 * Math.PI), ((i + 1) / strokes) * (2 * Math.PI));
         this.ctx.stroke();
       }
@@ -112,28 +111,50 @@ export class ColorMapEditor {
 
   private addEventListeners() {
     let draggedBefore = false;
+    let isDragging: boolean = false;
+    let dragIndex: number = -1;
+    let abortController: AbortController = null;
 
-    const checkDragStart = (e: {offsetX: number; offsetY: number}) => {
-      this.dragIndex = -1;
+    const checkDragStart = (e: { offsetX: number; offsetY: number }) => {
+      dragIndex = -1;
       for (let i = 0; i < this.colorMap.length; i++) {
         const stop = this.colorMap[i];
         const dx = Math.abs(stop.stop * this.canvas.width - e.offsetX);
         if (dx < this.controlPointSize) {
-          this.dragIndex = i;
-          this.isDragging = true;
+          dragIndex = i;
+          isDragging = true;
           break;
         }
       }
+
+      if (isDragging) {
+        abortController = new AbortController();
+        document.addEventListener("mousemove", (e) => {
+          e.preventDefault();
+          const offsetX = e.clientX - this.canvas.getBoundingClientRect().x;
+          const x = Math.max(0, Math.min(1, offsetX / this.canvas.width));
+
+          if (dragIndex !== 0 && dragIndex !== this.colorMap.length - 1) {
+            this.colorMap[dragIndex].stop = x;
+          }
+
+          this.colorMap.sort((a, b) => a.stop - b.stop);
+          this.updateColorRange();
+          this.draw();
+          this.callback(this.colorMap);
+          draggedBefore = true;
+        }, { signal: abortController.signal });
+      }
     };
 
-    this.canvas.addEventListener('mousedown', (e) => {
+    this.canvas.addEventListener("mousedown", (e) => {
       draggedBefore = false;
       if (e.button === 0) {
         // Left click
         checkDragStart(e);
       }
 
-      if (this.isDragging) {
+      if (isDragging) {
         return;
       }
 
@@ -141,7 +162,7 @@ export class ColorMapEditor {
       if (e.button === 0) {
         // Left click
         const rgb = this.colorRange(x);
-        const stop = {stop: x, rgb};
+        const stop = { stop: x, rgb };
         this.colorMap.push(stop);
         this.colorMap.sort((a, b) => a.stop - b.stop);
         this.updateColorRange();
@@ -170,45 +191,16 @@ export class ColorMapEditor {
       }
     });
 
-    this.canvas.addEventListener('mousemove', (e) => {
-      if (this.isDragging && this.dragIndex !== -1) {
-        const x = Math.max(0, Math.min(1, e.offsetX / this.canvas.width));
-
-        if (this.dragIndex !== 0 && this.dragIndex !== this.colorMap.length - 1) {
-          this.colorMap[this.dragIndex].stop = x;
-        }
-
-        this.colorMap.sort((a, b) => a.stop - b.stop);
-        this.updateColorRange();
-        this.draw();
-        this.callback(this.colorMap);
-        draggedBefore = true;
+    document.addEventListener("mouseup", (e) => {
+      if (isDragging && abortController) {
+        abortController.abort();
+        abortController = null;
+        isDragging = false;
+        dragIndex = -1;
       }
     });
 
-    this.canvas.addEventListener('mouseup', (e) => {
-      this.isDragging = false;
-      this.dragIndex = -1;
-    });
-
-    this.canvas.addEventListener('mouseleave', (e) => {
-      if (this.isDragging && this.dragIndex !== -1) {
-        const x = Math.max(0 + Number.EPSILON, Math.min(1 - Number.EPSILON, e.offsetX / this.canvas.width));
-
-        if (this.dragIndex !== 0 && this.dragIndex !== this.colorMap.length - 1) {
-          this.colorMap[this.dragIndex].stop = x;
-        }
-
-        this.colorMap.sort((a, b) => a.stop - b.stop);
-        this.updateColorRange();
-        this.draw();
-        this.callback(this.colorMap);
-        this.isDragging = false;
-        this.dragIndex = -1;
-      }
-    });
-
-    this.canvas.addEventListener('click', (e) => {
+    this.canvas.addEventListener("click", (e) => {
       if (draggedBefore) {
         return;
       }
@@ -228,8 +220,9 @@ export class ColorMapEditor {
         const x = stop.stop * this.canvas.width;
 
         this.colorPickerContainer.style.left = `${x}px`;
-        this.colorPickerContainer.style.visibility = 'visible';
-        this.colorPicker.onChange(() => {});
+        this.colorPickerContainer.style.visibility = "visible";
+        this.colorPicker.onChange(() => {
+        });
         this.colorPicker.setHEX(stop.rgb);
         this.colorPicker.onChange((newColor) => {
           stop.rgb = newColor.hex;
@@ -240,10 +233,10 @@ export class ColorMapEditor {
       }
     });
 
-    this.colorPickerContainer.addEventListener('click', (e) => e.stopPropagation());
+    this.colorPickerContainer.addEventListener("click", (e) => e.stopPropagation());
 
-    document.addEventListener('click', () => {
-      this.colorPickerContainer.style.visibility = 'hidden';
+    document.addEventListener("click", () => {
+      this.colorPickerContainer.style.visibility = "hidden";
     });
   }
 }

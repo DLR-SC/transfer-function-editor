@@ -1,7 +1,7 @@
-import {AlphaStop, ColorStop, TransferFunction} from './Types';
-import * as d3Scale from 'd3-scale';
-import * as d3Color from 'd3-color';
-import * as d3Interpolate from 'd3-interpolate';
+import { AlphaStop, ColorStop, TransferFunction } from "./Types";
+import * as d3Scale from "d3-scale";
+import * as d3Color from "d3-color";
+import * as d3Interpolate from "d3-interpolate";
 
 export class TransparencyEditor {
   private container: HTMLElement;
@@ -13,12 +13,9 @@ export class TransparencyEditor {
 
   private colorRange: d3Scale.ScaleLinear<string, string>;
   private colorMap: Array<ColorStop> = [
-    {stop: 0, rgb: 'black'},
-    {stop: 1, rgb: 'black'},
+    { stop: 0, rgb: "black" },
+    { stop: 1, rgb: "black" }
   ];
-
-  private isDragging: boolean = false;
-  private dragIndex: number = -1;
   private controlPointSize: number = 7;
 
   private callback: (transferFunction: TransferFunction) => void;
@@ -26,30 +23,30 @@ export class TransparencyEditor {
   constructor(
     container: HTMLElement | string,
     transferFunction: Array<AlphaStop> = [
-      {stop: 0, alpha: 1},
-      {stop: 0.5, alpha: 0.5},
-      {stop: 1, alpha: 0},
+      { stop: 0, alpha: 1 },
+      { stop: 0.5, alpha: 0.5 },
+      { stop: 1, alpha: 0 }
     ]
   ) {
     if (container) {
-      if (typeof container === 'string') {
+      if (typeof container === "string") {
         this.container = document.querySelector(container);
       } else {
         this.container = container;
       }
     } else {
-      throw 'No element given!';
+      throw "No element given!";
     }
 
-    this.container.classList.add('tfe-transparency-editor');
+    this.container.classList.add("tfe-transparency-editor");
 
     this.controlPoints = transferFunction;
-    this.canvas = document.createElement('canvas');
+    this.canvas = document.createElement("canvas");
     this.canvas.width = this.container.clientWidth;
     this.canvas.height = this.container.clientHeight;
-    this.canvas.style.imageRendering = 'pixelated';
+    this.canvas.style.imageRendering = "pixelated";
     this.container.appendChild(this.canvas);
-    this.ctx = this.canvas.getContext('2d');
+    this.ctx = this.canvas.getContext("2d");
     this.updateColorRange();
     this.updateAlphaRange();
     this.draw();
@@ -62,7 +59,7 @@ export class TransparencyEditor {
   }
 
   public getTransferFunction(): TransferFunction {
-    return {alphaStops: this.controlPoints, colorMap: this.colorMap};
+    return { alphaStops: this.controlPoints, colorMap: this.colorMap };
   }
 
   public getRGB(stop: number): string {
@@ -81,7 +78,7 @@ export class TransparencyEditor {
   }
 
   public addControlPoint(stop, alpha): void {
-    this.controlPoints.push({stop, alpha});
+    this.controlPoints.push({ stop, alpha });
     this.sortControlPoints();
     this.updateAlphaRange();
     this.sendUpdate();
@@ -127,7 +124,7 @@ export class TransparencyEditor {
 
   private sendUpdate() {
     if (this.callback) {
-      this.callback({alphaStops: this.controlPoints, colorMap: this.colorMap});
+      this.callback({ alphaStops: this.controlPoints, colorMap: this.colorMap });
     }
   }
 
@@ -159,7 +156,7 @@ export class TransparencyEditor {
     }
 
     // Draw the lines between points.
-    this.ctx.strokeStyle = 'black';
+    this.ctx.strokeStyle = "black";
     this.ctx.beginPath();
     for (let i = 0; i < this.controlPoints.length; i++) {
       const x = this.controlPoints[i].stop * this.canvas.width;
@@ -173,11 +170,11 @@ export class TransparencyEditor {
     this.ctx.stroke();
 
     // Draw the control points.
-    this.ctx.fillStyle = 'white';
+    this.ctx.fillStyle = "white";
     for (let i = 0; i < this.controlPoints.length; i++) {
       const x = this.controlPoints[i].stop * this.canvas.width;
       const y = this.controlPoints[i].alpha * this.canvas.height;
-      this.ctx.strokeStyle = 'black';
+      this.ctx.strokeStyle = "black";
       this.ctx.beginPath();
       this.ctx.arc(x, y, this.controlPointSize, 0, 2 * Math.PI);
       this.ctx.fill();
@@ -189,40 +186,68 @@ export class TransparencyEditor {
     this.controlPoints.sort((a, b) => a.stop - b.stop);
   }
 
-  private pixelToNormalized(x: number, y: number): {stop: number; alpha: number} {
+  private pixelToNormalized(x: number, y: number): { stop: number; alpha: number } {
     const stop = Math.max(0, Math.min(1, x / this.canvas.width));
     const alpha = Math.max(0, Math.min(1, y / this.canvas.height));
-    return {stop, alpha};
+    return { stop, alpha };
   }
 
   private addEventListeners() {
-    const checkDragStart = (e: {offsetX: number; offsetY: number}) => {
-      this.dragIndex = -1;
+    let isDragging: boolean = false;
+    let dragIndex: number = -1;
+    let abortController: AbortController = null;
+
+    const checkDragStart = (e: { offsetX: number; offsetY: number }) => {
+      dragIndex = -1;
       for (let i = 0; i < this.controlPoints.length; i++) {
         const controlPoint = this.controlPoints[i];
         const dx = controlPoint.stop * this.canvas.width - e.offsetX;
         const dy = controlPoint.alpha * this.canvas.height - e.offsetY;
         if (Math.sqrt(dx * dx + dy * dy) < this.controlPointSize) {
-          this.dragIndex = i;
-          this.isDragging = true;
+          dragIndex = i;
+          isDragging = true;
           break;
         }
       }
+
+      if (isDragging) {
+        abortController = new AbortController();
+        document.addEventListener("mousemove", (e) => {
+          e.preventDefault();
+          const offsetX = e.clientX - this.canvas.getBoundingClientRect().x;
+          const offsetY = e.clientY - this.canvas.getBoundingClientRect().y;
+
+          const { stop, alpha } = this.pixelToNormalized(offsetX, offsetY);
+
+          if (dragIndex === 0) {
+            this.controlPoints[dragIndex].alpha = alpha;
+          } else if (dragIndex === this.controlPoints.length - 1) {
+            this.controlPoints[dragIndex].alpha = alpha;
+          } else {
+            this.controlPoints[dragIndex].stop = stop;
+            this.controlPoints[dragIndex].alpha = alpha;
+          }
+          this.sortControlPoints();
+          this.updateAlphaRange();
+          this.sendUpdate();
+          this.draw();
+        }, { signal: abortController.signal });
+      }
     };
 
-    this.canvas.addEventListener('mousedown', (e) => {
+    this.canvas.addEventListener("mousedown", (e) => {
       if (e.button === 0) {
         // Left click
         checkDragStart(e);
       }
 
-      if (this.isDragging) {
+      if (isDragging) {
         return;
       }
 
       if (e.button === 0) {
         // Left click
-        const {stop, alpha} = this.pixelToNormalized(e.offsetX, e.offsetY);
+        const { stop, alpha } = this.pixelToNormalized(e.offsetX, e.offsetY);
         this.addControlPoint(stop, alpha);
         checkDragStart(e);
       } else if (e.button === 1) {
@@ -232,52 +257,12 @@ export class TransparencyEditor {
       }
     });
 
-    this.canvas.addEventListener('mousemove', (e) => {
-      if (this.isDragging && this.dragIndex !== -1) {
-        const {stop, alpha} = this.pixelToNormalized(e.offsetX, e.offsetY);
-
-        if (this.dragIndex === 0) {
-          this.controlPoints[this.dragIndex].alpha = alpha;
-        } else if (this.dragIndex === this.controlPoints.length - 1) {
-          this.controlPoints[this.dragIndex].alpha = alpha;
-        } else {
-          this.controlPoints[this.dragIndex].stop = stop;
-          this.controlPoints[this.dragIndex].alpha = alpha;
-        }
-        this.sortControlPoints();
-        this.updateAlphaRange();
-        this.sendUpdate();
-        this.draw();
-      }
-    });
-
-    this.canvas.addEventListener('mouseup', () => {
-      this.isDragging = false;
-      this.dragIndex = -1;
-    });
-
-    this.canvas.addEventListener('mouseleave', (e) => {
-      if (this.isDragging) {
-        const controlPoint = this.controlPoints[this.dragIndex];
-        if (e.offsetY < 0) {
-          controlPoint.alpha = 0;
-        } else if (e.offsetY > this.canvas.height) {
-          controlPoint.alpha = 1;
-        }
-
-        if (e.offsetX < 0 && this.dragIndex > 0) {
-          controlPoint.stop = (this.dragIndex + 1) * Number.EPSILON;
-        } else if (e.offsetX > this.canvas.width && this.dragIndex < this.controlPoints.length - 1) {
-          controlPoint.stop = 1 - (this.controlPoints.length - this.dragIndex) * Number.EPSILON;
-        }
-
-        this.isDragging = false;
-        this.dragIndex = -1;
-
-        this.sortControlPoints();
-        this.updateAlphaRange();
-        this.sendUpdate();
-        this.draw();
+    document.addEventListener("mouseup", () => {
+      if (isDragging && abortController) {
+        abortController.abort();
+        abortController = null;
+        isDragging = false;
+        dragIndex = -1;
       }
     });
   }

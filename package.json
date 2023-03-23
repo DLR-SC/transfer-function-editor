@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A simple transfer function editor.",
   "source": "src/index.ts",
-  "module": "dist/transfer-function-editor.module.js",
+  "module": "dist/transfer-function-editor.modern.js",
   "unpkg": "dist/transfer-function-editor.umd.js",
   "amdName": "TransferFunctionEditor",
   "scripts": {
