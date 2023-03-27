@@ -1,6 +1,7 @@
-import {hsl as d3HSL, rgb as d3RGB} from 'd3-color';
-import {hsv, hsv as d3HSV, HSVColor} from 'd3-hsv';
+import { hsl as d3HSL } from "d3-color";
+import { hsv as d3HSV, HSVColor } from "d3-hsv";
 
+// Add a stylesheet to the header, that contains the base layout of the color picker.
 document.head.innerHTML += `<style>
     .tfe-color-picker-root {
         display: flex;
@@ -49,20 +50,67 @@ document.head.innerHTML += `<style>
     }
 </style>`;
 
+/**
+ * This creates a color picker component, that will be embedded in the given container. The color can be chosen with a
+ * hue, saturation and value picker, or by text fields for hsv, rgb and hex values. This might be more configurable in
+ * the future.
+ *
+ * @example
+ * ```js
+ *   const cp = new ColorPicker("#color-picker-container", { initialColor: "cyan" });
+ *
+ *   cp.onChange((newColor) => {
+ *     console.log("rgb: ", newColor.rgb); // rgb: { r: 0, g: 255, b: 255 }
+ *     console.log("hsv: ", newColor.hsv); // hsv: { r: 180, g: 1, b: 0.5 }
+ *     console.log("hsl: ", newColor.hsl); // hsl: { h: 180, s: 1, l: 1 }
+ *     console.log("hex: ", newColor.hex); // hex: "#00ffff"
+ *   });
+ * ```
+ */
 export class ColorPicker {
+  /** The root element, in which the color picker gets embedded. */
   private container: HTMLElement;
+
+  /** This is the internal color state. We chose hsv as a fitting internal representation. */
   private hsv: HSVColor;
+
+  /**
+   * If a color on the black-grey-white spectrum is selected the hue becomes undefined. This field saves, the last valid
+   * hue state, to ensure that the hue value doesn't vanish.
+   */
   private backUpHue;
+
+  /**
+   * If the value is zero, the saturation becomes undefined. This field saves, the last valid saturation state, to
+   * ensure that the saturation value doesn't vanish.
+   */
   private backUpSaturation;
+
+  /** The saturation and value picker is painted in this canvas. It also handles mouse input. */
   private readonly svCanvas: HTMLCanvasElement;
+
+  /** The context to the svCanvas for convenience. */
   private svContext: CanvasRenderingContext2D;
+
+  /** The hue picker is painted in this canvas. It also handles mouse input. */
   private readonly hCanvas: HTMLCanvasElement;
+
+  /** The context to the hCanvas for convenience. */
   private hContext: CanvasRenderingContext2D;
+
+  /** The default dimensions of the color picker components. Might become configurable in the future. */
   private readonly CANVAS_SIZE: number = 256;
+
+  /** The size of the control points. Might become configurable in the future. */
   private controlPointSize: number = 7;
 
+  /** This gets called, when the color changes to notify users of this library. */
   private callback: (newColor: Color) => void;
 
+  /** This determines, if the callback receives colors in normalized space (0.0 - 1.0). */
+  private normalizedCallback: boolean;
+
+  /** All the HTMLElements for manual editing the hsv, rgb and hex values. */
   private inputFields: {
     h: HTMLInputElement;
     s: HTMLInputElement;
@@ -73,23 +121,35 @@ export class ColorPicker {
     hex: HTMLInputElement;
   };
 
+  /** Displays the resulting color. */
   private previewElement: HTMLDivElement;
 
+  /**
+   * Creates a new color picker inside the given container.
+   *
+   * @param container Either an HTMLElement or a query string to an element, in which the color picker will be embedded.
+   * @param options   Can be used to configure the color picker. See {@link ColorPickerOptions}.
+   */
   constructor(container: HTMLElement | string, options?: ColorPickerOptions) {
+    // Figure out which element we want to embed in.
     if (container) {
-      if (typeof container === 'string') {
+      if (typeof container === "string") {
         this.container = document.querySelector(container);
       } else {
         this.container = container;
       }
     } else {
-      throw 'No element given!';
+      throw "No element given!";
     }
 
+    // Set all defaults.
     const defaultOptions: ColorPickerOptions = {
-      initialColor: '#FFF'
-    }
-    const finalOptions = Object.assign(defaultOptions, options)
+      initialColor: "#FFF"
+    };
+
+    // Merge the options with the defaults.
+    // !!! DON'T USE options AND defaultOptions AFTER THIS LINE !!!
+    const finalOptions = Object.assign(defaultOptions, options);
 
     this.hsv = d3HSV(finalOptions.initialColor);
     if (Number.isNaN(this.hsv.h)) {
@@ -103,97 +163,96 @@ export class ColorPicker {
     this.backUpHue = this.hsv.h;
     this.backUpSaturation = this.hsv.s;
 
-    this.container.classList.add('tfe-color-picker');
-
+    // Fill the given container with all the HTML and CSS that we need.
+    this.container.classList.add("tfe-color-picker");
     this.container.innerHTML = `
-<div class="tfe-color-picker-root">
-  <div class="tfe-color-picker-sl-picker" style="width: ${this.CANVAS_SIZE}px; height: ${this.CANVAS_SIZE}px">
-    <canvas class="tfe-color-picker-sl-picker-canvas" width="${this.CANVAS_SIZE}" height="${this.CANVAS_SIZE}" />
-  </div>
-  <div class="tfe-color-picker-h-picker"  style="height: ${this.CANVAS_SIZE}px">
-    <canvas class="tfe-color-picker-h-picker-canvas" width="18" height="${this.CANVAS_SIZE}" />
-  </div>
-  <form class="tfe-color-picker-input-root">
-    <div class="tfe-color-preview" style="background: ${this.getHEX()}"></div>
+      <div class="tfe-color-picker-root">
+        <div class="tfe-color-picker-sl-picker" style="width: ${this.CANVAS_SIZE}px; height: ${this.CANVAS_SIZE}px">
+          <canvas class="tfe-color-picker-sl-picker-canvas" width="${this.CANVAS_SIZE}" height="${this.CANVAS_SIZE}" />
+        </div>
+        <div class="tfe-color-picker-h-picker"  style="height: ${this.CANVAS_SIZE}px">
+          <canvas class="tfe-color-picker-h-picker-canvas" width="18" height="${this.CANVAS_SIZE}" />
+        </div>
+        <form class="tfe-color-picker-input-root">
+          <div class="tfe-color-preview" style="background: ${this.getHEX()}"></div>
+      
+          <div></div>
+          <div></div>
+      
+          <label for="h">h:</label>
+          <input class="tfe-color-picker-h-input" name="h" type="number" min="0" max="360" step="1" value="${this.hsv.h.toFixed(0)}">
+      
+          <label for="s">s:</label>
+          <input class="tfe-color-picker-s-input" name="s" type="number" min="0" max="100" step="1" value="${(this.hsv.s * 100).toFixed(0)}">
+      
+          <label for="v">v:</label>
+          <input class="tfe-color-picker-v-input" name="v" type="number" min="0" max="100" step="1" value="${(this.hsv.v * 100).toFixed(0)}">
+      
+          <div></div>
+          <div></div>
+      
+          <label for="r">r:</label>
+          <input class="tfe-color-picker-r-input" name="r" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().r.toFixed(0)}">
+      
+          <label for="g">g:</label>
+          <input class="tfe-color-picker-g-input" name="g" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().g.toFixed(0)}">
+      
+          <label for="b">b:</label>
+          <input class="tfe-color-picker-b-input" name="b" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().b.toFixed(0)}">
+      
+          <div></div>
+          <div></div>
+      
+          <label for="hex">hex:</label>
+          <input class="tfe-color-picker-hex-input" name="hex" type="text" minlength="4" maxlength="7" value="${this.getHEX()}">
+        </form>
+      </div>
+    `;
 
-    <div></div>
-    <div></div>
-
-    <label for="h">h:</label>
-    <input class="tfe-color-picker-h-input" name="h" type="number" min="0" max="360" step="1" value="${this.hsv.h.toFixed(0)}">
-
-    <label for="s">s:</label>
-    <input class="tfe-color-picker-s-input" name="s" type="number" min="0" max="100" step="1" value="${(this.hsv.s * 100).toFixed(0)}">
-
-    <label for="v">v:</label>
-    <input class="tfe-color-picker-v-input" name="v" type="number" min="0" max="100" step="1" value="${(this.hsv.v * 100).toFixed(0)}">
-
-    <div></div>
-    <div></div>
-
-    <label for="r">r:</label>
-    <input class="tfe-color-picker-r-input" name="r" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().r.toFixed(0)}">
-
-    <label for="g">g:</label>
-    <input class="tfe-color-picker-g-input" name="g" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().g.toFixed(0)}">
-
-    <label for="b">b:</label>
-    <input class="tfe-color-picker-b-input" name="b" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().b.toFixed(0)}">
-
-    <div></div>
-    <div></div>
-
-    <label for="hex">hex:</label>
-    <input class="tfe-color-picker-hex-input" name="hex" type="text" minlength="4" maxlength="7" value="${this.getHEX()}">
-  </form>
-</div>        
-        `;
-
-    this.svCanvas = this.container.querySelector<HTMLCanvasElement>('.tfe-color-picker-sl-picker-canvas');
-    this.svContext = this.svCanvas.getContext('2d', {alpha: false});
-
+    // Prepare the canvas and context for the saturation and value picker.
+    this.svCanvas = this.container.querySelector<HTMLCanvasElement>(".tfe-color-picker-sl-picker-canvas");
+    this.svContext = this.svCanvas.getContext("2d", { alpha: false });
     this.drawSVPicker();
     this.addSVEventListener();
 
-    this.hCanvas = this.container.querySelector<HTMLCanvasElement>('.tfe-color-picker-h-picker-canvas');
-    this.hContext = this.hCanvas.getContext('2d', {alpha: false});
-
+    // Prepare the canvas and context for the hue picker.
+    this.hCanvas = this.container.querySelector<HTMLCanvasElement>(".tfe-color-picker-h-picker-canvas");
+    this.hContext = this.hCanvas.getContext("2d", { alpha: false });
     this.drawHPicker();
     this.addHEventListener();
+
+    // Initialize all text input fields.
     this.inputFields = {
-      h: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-h-input'),
-      s: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-s-input'),
-      v: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-v-input'),
-      r: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-r-input'),
-      g: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-g-input'),
-      b: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-b-input'),
-      hex: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-hex-input'),
+      h: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-h-input"),
+      s: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-s-input"),
+      v: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-v-input"),
+      r: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-r-input"),
+      g: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-g-input"),
+      b: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-b-input"),
+      hex: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-hex-input")
     };
     this.addInputEventListeners();
 
-    this.previewElement = this.container.querySelector<HTMLDivElement>('.tfe-color-preview');
+    // Get the preview element.
+    this.previewElement = this.container.querySelector<HTMLDivElement>(".tfe-color-preview");
   }
 
-  public onChange(callback: (newColor: Color) => void) {
+  /**
+   * Register a callback that gets called, when a new color is picked.
+   *
+   * @param callback   The function that gets called whenever the color changes.
+   * @param normalized If true, the callback receives colors in normalized (0.0 - 1.0) form.
+   */
+  public onChange(callback: (newColor: Color) => void, normalized: boolean = false) {
+    this.normalizedCallback = normalized;
     this.callback = callback;
-    const rgb = this.getRGB();
-    const hsl = this.getHSL();
-    const hsv = this.getHSV();
-    this.callback({rgb, hsl, hsv, hex: this.getHEX()});
+    this.callback(normalized ? this.getColorNormalized() : this.getColor());
   }
 
-  private sendUpdate() {
-    const hex = this.getHEX();
-    this.previewElement.style.backgroundColor = hex;
-
-    if (this.callback) {
-      const rgb = this.getRGB();
-      const hsl = this.getHSL();
-      const hsv = this.getHSV();
-      this.callback({rgb, hsl, hsv, hex});
-    }
-  }
-
+  /**
+   * Sets a new color for the color picker in HEX format. Theoretically all valid CSS color strings are can be read in
+   * here, but for consistency with other function names we keep the name as is.
+   */
   public setHEX(color: string) {
     this.hsv = d3HSV(color);
     this.validateHueAndSaturation();
@@ -201,20 +260,39 @@ export class ColorPicker {
     this.drawAll();
   }
 
+  /** Sets a new color for the color picker in RGB format. The given values must be in the range of 0 - 255. */
   public setRGB(r: number, g: number, b: number) {
-    this.hsv = d3HSV(`rgb(${r * 255},${g * 255},${b * 255})`);
+    this.hsv = d3HSV(`rgb(${r},${g},${b})`);
     this.validateHueAndSaturation();
     this.sendUpdate();
     this.drawAll();
   }
 
+  /** Sets a new color for the color picker in RGB format. The given values must be in the range of 0.0 - 1.0. */
+  public setRGBNormalized(r: number, g: number, b: number) {
+    this.setRGB(r * 255, g * 255, b * 255);
+  }
+
+  /**
+   * Sets a new color for the color picker in HSL format. The given values must be in the range of 0 - 360 for h and
+   * 0 - 100 for s and l.
+   */
   public setHSL(h: number, s: number, l: number) {
-    this.hsv = d3HSV(`hsl(${h * 360} ${s * 100} ${l * 100})`);
+    this.hsv = d3HSV(`hsl(${h} ${s} ${l})`);
     this.validateHueAndSaturation();
     this.sendUpdate();
     this.drawAll();
   }
 
+  /** Sets a new color for the color picker in HSL format. The given values must be in the range of 0.0 - 1.0. */
+  public setHSLNormalized(h: number, s: number, l: number) {
+    this.setHSL(h * 360, s * 100, l * 100);
+  }
+
+  /**
+   * Sets a new color for the color picker in HSV format. The given values must be in the range of 0 - 360 for h and
+   * 0 - 100 for s and v.
+   */
   public setHSV(h: number, s: number, v: number) {
     this.hsv = d3HSV(h, s, v);
     this.validateHueAndSaturation();
@@ -222,45 +300,111 @@ export class ColorPicker {
     this.drawAll();
   }
 
-  public getHEX(): string {
-    return this.formatHSV(this.hsv);
+  /** Sets a new color for the color picker in HSV format. The given values must be in the range of 0.0 - 1.0. */
+  public setHSVNormalized(h: number, s: number, v: number) {
+    this.setHSV(h * 360, s * 100, v * 100);
   }
 
+  /** Returns the currently selected color in HEX format. */
+  public getHEX(): string {
+    return this.hsv.formatHex();
+  }
+
+  /** Returns the currently selected color on RGB format with values between 0 - 255. */
   public getRGB(): RGB {
     const rgb = this.hsv.rgb();
-    return {r: rgb.r, g: rgb.g, b: rgb.b};
+    return { r: rgb.r, g: rgb.g, b: rgb.b };
   }
 
+  /** Returns the currently selected color on RGB format with values between 0.0 - 1.0. */
+  public getRGBNormalized(): RGB {
+    const rgb = this.hsv.rgb();
+    return { r: rgb.r / 255, g: rgb.g / 255, b: rgb.b / 255 };
+  }
+
+  /** Returns the currently selected color on HSL format with values between 0 - 360 for h and 0 - 100 for s and l. */
   public getHSL(): HSL {
     const hsl = d3HSL(this.hsv.formatHsl());
-    return {h: hsl.h, s: hsl.s, l: hsl.l};
+    return { h: hsl.h, s: hsl.s * 100, l: hsl.l * 100 };
   }
 
+  /** Returns the currently selected color on HSL format with values between 0.0 - 1.0. */
+  public getHSLNormalized(): HSL {
+    const hsl = d3HSL(this.hsv.formatHsl());
+    return { h: hsl.h / 360, s: hsl.s, l: hsl.l };
+  }
+
+  /** Returns the currently selected color on HSV format with values between 0 - 360 for h and 0 - 100 for s and v. */
   public getHSV(): HSV {
-    return {h: this.hsv.h, s: this.hsv.s, v: this.hsv.v};
+    return { h: this.hsv.h, s: this.hsv.s * 100, v: this.hsv.v * 100 };
   }
 
+  /** Returns the currently selected color on HSV format with values between 0.0 - 1.0. */
+  public getHSVNormalized(): HSV {
+    return { h: this.hsv.h / 360, s: this.hsv.s, v: this.hsv.v };
+  }
+
+  /**
+   * Returns a collection of all different color representations of the currently selected color. RGB values are in the
+   * range 0 - 255, hue is in the range 0 - 360, saturation, value and lightness are in the range 0 - 100.
+   */
+  public getColor(): Color {
+    const rgb = this.getRGB();
+    const hsl = this.getHSL();
+    const hsv = this.getHSV();
+    const hex = this.getHEX();
+    return { rgb, hsl, hsv, hex };
+  }
+
+  /**
+   * Returns a collection of all different color representations of the currently selected color. All numerical values
+   * are in the range 0.0 - 1.0.
+   */
+  public getColorNormalized(): Color {
+    const rgb = this.getRGBNormalized();
+    const hsl = this.getHSLNormalized();
+    const hsv = this.getHSVNormalized();
+    const hex = this.getHEX();
+    return { rgb, hsl, hsv, hex };
+  }
+
+  /**
+   * This function should be called everytime the color change. It triggers the callback and sets the color of the
+   * preview element.
+   */
+  private sendUpdate() {
+    this.previewElement.style.backgroundColor = this.getHEX();
+
+    if (this.callback) {
+      this.callback(this.normalizedCallback ? this.getColorNormalized() : this.getColor());
+    }
+  }
+
+  /** Draws the saturation-value picker and the hue picker. */
   private drawAll() {
     this.drawHPicker();
     this.drawSVPicker();
   }
 
+  /** Draws the saturation-value picker. */
   private drawSVPicker() {
-    for (let x = 0; x < this.CANVAS_SIZE; x++) {
-      const gradient = this.svContext.createLinearGradient(0, 0, 0, this.CANVAS_SIZE);
-      gradient.addColorStop(0, d3HSV(this.hsv.h, x / this.CANVAS_SIZE, 1).formatHex());
-      gradient.addColorStop(1, d3HSV(this.hsv.h, x / this.CANVAS_SIZE, 0).formatHex());
+    // This draws the hsv gradient line by line.
+    for (let y = 0; y < this.CANVAS_SIZE; y++) {
+      const gradient = this.svContext.createLinearGradient(0, 0, this.CANVAS_SIZE, 0);
+      gradient.addColorStop(0, d3HSV(this.hsv.h, 0, 1 - y / this.CANVAS_SIZE).formatHex());
+      gradient.addColorStop(1, d3HSV(this.hsv.h, 1, 1 - y / this.CANVAS_SIZE).formatHex());
 
       this.svContext.fillStyle = gradient;
-      this.svContext.fillRect(x, 0, 1, this.CANVAS_SIZE);
+      this.svContext.fillRect(0, y, this.CANVAS_SIZE, 1);
     }
 
+    // Draw the control point. To ensure visibility everywhere it is an alternating circle in white and black.
     const x = this.hsv.s * this.CANVAS_SIZE;
     const y = (1 - this.hsv.v) * this.CANVAS_SIZE;
     const strokes = 10;
     for (let i = 0; i < strokes; i++) {
       this.svContext.beginPath();
-      this.svContext.strokeStyle = i % 2 === 0 ? 'white' : 'black';
+      this.svContext.strokeStyle = i % 2 === 0 ? "white" : "black";
       this.svContext.arc(
         x,
         y,
@@ -272,25 +416,27 @@ export class ColorPicker {
     }
   }
 
+  /** Draws the hue picker. */
   private drawHPicker() {
+    // Draw the hue gradient.
     const gradient = this.hContext.createLinearGradient(0, 0, 0, this.hCanvas.height);
-    gradient.addColorStop(0 / 6, '#ff0000');
-    gradient.addColorStop(1 / 6, '#ffff00');
-    gradient.addColorStop(2 / 6, '#00ff00');
-    gradient.addColorStop(3 / 6, '#00ffff');
-    gradient.addColorStop(4 / 6, '#0000ff');
-    gradient.addColorStop(5 / 6, '#ff00ff');
-    gradient.addColorStop(6 / 6, '#ff0000');
+    gradient.addColorStop(0 / 6, "#ff0000");
+    gradient.addColorStop(1 / 6, "#ffff00");
+    gradient.addColorStop(2 / 6, "#00ff00");
+    gradient.addColorStop(3 / 6, "#00ffff");
+    gradient.addColorStop(4 / 6, "#0000ff");
+    gradient.addColorStop(5 / 6, "#ff00ff");
+    gradient.addColorStop(6 / 6, "#ff0000");
     this.hContext.fillStyle = gradient;
     this.hContext.fillRect(0, 0, this.hCanvas.width, this.hCanvas.height);
 
+    // Draw the control point. To ensure visibility everywhere it is an alternating circle in white and black.
     const x = this.hCanvas.width / 2;
     const y = (this.hsv.h / 360) * this.hCanvas.height;
-
     const strokes = 10;
     for (let i = 0; i < strokes; i++) {
       this.hContext.beginPath();
-      this.hContext.strokeStyle = i % 2 === 0 ? 'white' : 'black';
+      this.hContext.strokeStyle = i % 2 === 0 ? "white" : "black";
       this.hContext.arc(
         x,
         y,
@@ -302,34 +448,45 @@ export class ColorPicker {
     }
   }
 
+  /** Adds all the mouse input events for moving the control point of the saturation-value picker around. */
   private addSVEventListener() {
     let isDragging = false;
     let abortController: AbortController = null;
 
+    // Gets called when a new value was selected with the mouse.
     const updateSV = (x, y) => {
+      // Calculate new values from mouse position.
       this.hsv.s = clamp(x / this.CANVAS_SIZE, 0, 1);
       this.backUpSaturation = this.hsv.s;
       this.hsv.v = clamp(1 - y / this.CANVAS_SIZE, 0, 1);
+
+      // Send an update to the user.
       this.sendUpdate();
 
+      // Update other relevant components.
       this.drawSVPicker();
       this.updateHSVInputFields();
       this.updateRGBInputFields();
       this.updateHEXInputField();
     };
 
-    this.svCanvas.addEventListener('mousedown', (e) => {
-      abortController = new AbortController();
-      document.addEventListener('mousemove', (e) => {
-        e.preventDefault();
-        updateSV(e.clientX - this.svCanvas.getBoundingClientRect().x, e.clientY - this.svCanvas.getBoundingClientRect().y);
-      }, {signal: abortController.signal});
+    // When the left mouse button is pressed we attach a mouse move listener to the document to track the mouse movement
+    // even outside the canvas.
+    this.svCanvas.addEventListener("mousedown", (e) => {
+      if (e.button === 0) {
+        abortController = new AbortController();
+        document.addEventListener("mousemove", (e) => {
+          e.preventDefault();
+          updateSV(e.clientX - this.svCanvas.getBoundingClientRect().x, e.clientY - this.svCanvas.getBoundingClientRect().y);
+        }, { signal: abortController.signal });
 
-      isDragging = true;
-      updateSV(e.offsetX, e.offsetY);
+        isDragging = true;
+        updateSV(e.offsetX, e.offsetY);
+      }
     });
 
-    document.addEventListener('mouseup', (e) => {
+    // Stop the drag tracking and remove the move listener from the document.
+    document.addEventListener("mouseup", (e) => {
       if (isDragging && abortController) {
         abortController.abort();
         abortController = null;
@@ -338,33 +495,43 @@ export class ColorPicker {
     });
   }
 
+  /** Adds all the mouse input events for moving the control point of the hue picker around. */
   private addHEventListener() {
     let isDragging = false;
     let abortController: AbortController = null;
 
+    // Gets called when a new value was selected with the mouse.
     const updateH = (y) => {
+      // Calculate the new value from the mouse position.
       this.hsv.h = clamp(Math.round((y / this.CANVAS_SIZE) * 360), 0, 360);
       this.backUpHue = this.hsv.h;
+
+      // Send an update to the user.
       this.sendUpdate();
+
+      // Update other relevant components.
       this.drawAll();
       this.inputFields.h.valueAsNumber = Math.round(this.hsv.h);
       this.updateRGBInputFields();
       this.updateHEXInputField();
     };
 
-    this.hCanvas.addEventListener('mousedown', (e) => {
+    // When the left mouse button is pressed we attach a mouse move listener to the document to track the mouse movement
+    // even outside the canvas.
+    this.hCanvas.addEventListener("mousedown", (e) => {
       abortController = new AbortController();
-      document.addEventListener('mousemove', (e) => {
+      document.addEventListener("mousemove", (e) => {
         e.preventDefault();
         updateH(e.clientY - this.svCanvas.getBoundingClientRect().y);
-      }, {signal: abortController.signal});
+      }, { signal: abortController.signal });
 
 
       isDragging = true;
       updateH(e.offsetY);
     });
 
-    document.addEventListener('mouseup', (e) => {
+    // Stop the drag tracking and remove the move listener from the document.
+    document.addEventListener("mouseup", (e) => {
       if (isDragging && abortController) {
         abortController.abort();
         abortController = null;
@@ -373,7 +540,10 @@ export class ColorPicker {
     });
   }
 
+  /** Adds all the listeners to the text input fields. It also adds validation, so the values are always valid. */
   private addInputEventListeners() {
+    // This function clamps numbers inside a number input field to a given range and returns the number or null if it is
+    // not valid.
     const validateInput = (element: HTMLInputElement, min: number, max: number): number | null => {
       if (element.valueAsNumber < min) {
         element.valueAsNumber = min;
@@ -384,6 +554,7 @@ export class ColorPicker {
       return Number.isFinite(element.valueAsNumber) ? element.valueAsNumber : null;
     };
 
+    // This function validates the content of a number input, once it gets submitted or the focus is lost.
     const validateFinal = (element: HTMLInputElement, min: number, max: number): number | null => {
       const value = validateInput(element, min, max);
       if (value === null) {
@@ -393,7 +564,9 @@ export class ColorPicker {
       return null;
     };
 
-    this.inputFields.h.addEventListener('input', (ev: InputEvent) => {
+    // Setup hue listeners ---------------------------------------------------------------------------------------------
+
+    this.inputFields.h.addEventListener("input", (ev: InputEvent) => {
       const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 360);
       if (value !== null) {
         this.hsv.h = value;
@@ -418,14 +591,16 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.h.addEventListener('focusout', validateHField);
-    this.inputFields.h.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
+    this.inputFields.h.addEventListener("focusout", validateHField);
+    this.inputFields.h.addEventListener("keypress", (ev: KeyboardEvent) => {
+      if (ev.key === "Enter") {
         validateHField(ev);
       }
     });
 
-    this.inputFields.s.addEventListener('input', (ev: InputEvent) => {
+    // Setup saturation listeners --------------------------------------------------------------------------------------
+
+    this.inputFields.s.addEventListener("input", (ev: InputEvent) => {
       const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 100);
       if (value !== null) {
         this.hsv.s = value / 100;
@@ -450,14 +625,16 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.s.addEventListener('focusout', validateSField);
-    this.inputFields.s.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
+    this.inputFields.s.addEventListener("focusout", validateSField);
+    this.inputFields.s.addEventListener("keypress", (ev: KeyboardEvent) => {
+      if (ev.key === "Enter") {
         validateSField(ev);
       }
     });
 
-    this.inputFields.v.addEventListener('input', (ev: InputEvent) => {
+    // Setup value listeners -------------------------------------------------------------------------------------------
+
+    this.inputFields.v.addEventListener("input", (ev: InputEvent) => {
       const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 100);
       if (value !== null) {
         this.hsv.v = value / 100;
@@ -480,14 +657,16 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.v.addEventListener('focusout', validateVField);
-    this.inputFields.v.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
+    this.inputFields.v.addEventListener("focusout", validateVField);
+    this.inputFields.v.addEventListener("keypress", (ev: KeyboardEvent) => {
+      if (ev.key === "Enter") {
         validateVField(ev);
       }
     });
 
-    this.inputFields.r.addEventListener('input', (ev: InputEvent) => {
+    // Setup red listeners ---------------------------------------------------------------------------------------------
+
+    this.inputFields.r.addEventListener("input", (ev: InputEvent) => {
       const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
       if (value !== null) {
         const oldRGB = this.hsv.rgb();
@@ -514,14 +693,16 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.r.addEventListener('focusout', validateRField);
-    this.inputFields.r.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
+    this.inputFields.r.addEventListener("focusout", validateRField);
+    this.inputFields.r.addEventListener("keypress", (ev: KeyboardEvent) => {
+      if (ev.key === "Enter") {
         validateRField(ev);
       }
     });
 
-    this.inputFields.g.addEventListener('input', (ev: InputEvent) => {
+    // Setup green listeners -------------------------------------------------------------------------------------------
+
+    this.inputFields.g.addEventListener("input", (ev: InputEvent) => {
       const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
       if (value !== null) {
         const oldRGB = this.hsv.rgb();
@@ -548,14 +729,16 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.g.addEventListener('focusout', validateGField);
-    this.inputFields.g.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
+    this.inputFields.g.addEventListener("focusout", validateGField);
+    this.inputFields.g.addEventListener("keypress", (ev: KeyboardEvent) => {
+      if (ev.key === "Enter") {
         validateGField(ev);
       }
     });
 
-    this.inputFields.b.addEventListener('input', (ev: InputEvent) => {
+    // Setup blue listeners --------------------------------------------------------------------------------------------
+
+    this.inputFields.b.addEventListener("input", (ev: InputEvent) => {
       const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
       if (value !== null) {
         const oldRGB = this.hsv.rgb();
@@ -582,14 +765,16 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.b.addEventListener('focusout', validateBField);
-    this.inputFields.b.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
+    this.inputFields.b.addEventListener("focusout", validateBField);
+    this.inputFields.b.addEventListener("keypress", (ev: KeyboardEvent) => {
+      if (ev.key === "Enter") {
         validateBField(ev);
       }
     });
 
-    this.inputFields.hex.addEventListener('input', (ev: InputEvent) => {
+    // Setup hex listeners ---------------------------------------------------------------------------------------------
+
+    this.inputFields.hex.addEventListener("input", (ev: InputEvent) => {
       const element = ev.currentTarget as HTMLInputElement;
       const value = element.value;
       if (value.match(/#([0-7a-fA-F]{3}$|[0-7a-fA-F]{6}$)/)) {
@@ -599,28 +784,30 @@ export class ColorPicker {
         this.drawAll();
         this.updateRGBInputFields();
         this.updateHSVInputFields();
-        element.classList.remove('tfe-color-picker-input-hex-invalid');
+        element.classList.remove("tfe-color-picker-input-hex-invalid");
       } else {
-        element.classList.add('tfe-color-picker-input-hex-invalid');
+        element.classList.add("tfe-color-picker-input-hex-invalid");
       }
     });
 
-    this.inputFields.hex.addEventListener('focusout', (ev: InputEvent) => {
+    this.inputFields.hex.addEventListener("focusout", (ev: InputEvent) => {
       const element = ev.currentTarget as HTMLInputElement;
       const value = element.value;
       if (!value.match(/#([0-7a-fA-F]{3}$|[0-7a-fA-F]{6}$)/)) {
         element.value = this.getHEX();
-        element.classList.remove('tfe-color-picker-input-hex-invalid');
+        element.classList.remove("tfe-color-picker-input-hex-invalid");
       }
     });
   }
 
+  /** Updates the text inside the hsv input fields. */
   private updateHSVInputFields() {
     this.inputFields.h.valueAsNumber = clamp(Math.round(this.hsv.h), 0, 360);
     this.inputFields.s.valueAsNumber = clamp(Math.round(this.hsv.s * 100), 0, 100);
     this.inputFields.v.valueAsNumber = clamp(Math.round(this.hsv.v * 100), 0, 100);
   }
 
+  /** Updates the text inside the rgb input fields. */
   private updateRGBInputFields() {
     const rgb = this.hsv.rgb();
     this.inputFields.r.valueAsNumber = clamp(Math.round(rgb.r), 0, 255);
@@ -628,10 +815,15 @@ export class ColorPicker {
     this.inputFields.b.valueAsNumber = clamp(Math.round(rgb.b), 0, 255);
   }
 
+  /** Updates the text inside the hex input field. */
   private updateHEXInputField() {
     this.inputFields.hex.value = this.getHEX();
   }
 
+  /**
+   * Some colors have arbitrary hue or saturation values. We would like to show the last valid value in that case. This
+   * function ensures that this always is true. It must be called everytime the hsv field is updated.
+   */
   private validateHueAndSaturation() {
     if (Number.isNaN(this.hsv.h)) {
       this.hsv.h = this.backUpHue;
@@ -645,16 +837,20 @@ export class ColorPicker {
       this.backUpSaturation = this.hsv.s;
     }
   }
-
-  private formatHSV(hsv: HSVColor): string {
-    return d3HSL(hsv.toString()).formatHex();
-  }
 }
 
+/**
+ * The config options for the {@link ColorPicker} component.
+ */
 export interface ColorPickerOptions {
+  /**
+   * The initially selected color.
+   * Default: '#FFF'
+   */
   initialColor?: string;
 }
 
+/** Simple utility to clamp a number between two values. */
 function clamp(number, min, max): number {
   return Math.max(min, Math.min(max, number));
 }
