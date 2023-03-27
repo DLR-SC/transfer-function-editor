@@ -1,5 +1,5 @@
 import { hsl as d3HSL } from "d3-color";
-import { hsv as d3HSV, HSVColor } from "d3-hsv";
+import { hsv, hsv as d3HSV, HSVColor } from "d3-hsv";
 
 // Add a stylesheet to the header, that contains the base layout of the color picker.
 document.head.innerHTML += `<style>
@@ -598,6 +598,23 @@ export class ColorPicker {
       }
     });
 
+    this.inputFields.h.addEventListener("wheel", (ev: WheelEvent) => {
+      ev.preventDefault();
+
+      if (ev.deltaY > 0) {        // Decrement
+        this.hsv.h = clamp(this.hsv.h - 1, 0, 360);
+      } else if (ev.deltaY < 0) { // Increment
+        this.hsv.h = clamp(this.hsv.h + 1, 0, 360);
+      }
+
+      this.backUpHue = this.hsv.h;
+      this.sendUpdate();
+      this.drawAll();
+      this.inputFields.h.valueAsNumber = this.hsv.h;
+      this.updateRGBInputFields();
+      this.updateHEXInputField();
+    });
+
     // Setup saturation listeners --------------------------------------------------------------------------------------
 
     this.inputFields.s.addEventListener("input", (ev: InputEvent) => {
@@ -632,6 +649,23 @@ export class ColorPicker {
       }
     });
 
+    this.inputFields.s.addEventListener("wheel", (ev: WheelEvent) => {
+      ev.preventDefault();
+
+      if (ev.deltaY > 0) {        // Decrement
+        this.hsv.s = clamp(this.hsv.s - 0.01, 0, 1);
+      } else if (ev.deltaY < 0) { // Increment
+        this.hsv.s = clamp(this.hsv.s + 0.01, 0, 1);
+      }
+
+      this.backUpSaturation = this.hsv.s;
+      this.sendUpdate();
+      this.drawAll();
+      this.inputFields.s.valueAsNumber = Math.round(this.hsv.s * 100);
+      this.updateRGBInputFields();
+      this.updateHEXInputField();
+    });
+
     // Setup value listeners -------------------------------------------------------------------------------------------
 
     this.inputFields.v.addEventListener("input", (ev: InputEvent) => {
@@ -662,6 +696,22 @@ export class ColorPicker {
       if (ev.key === "Enter") {
         validateVField(ev);
       }
+    });
+
+    this.inputFields.v.addEventListener("wheel", (ev: WheelEvent) => {
+      ev.preventDefault();
+
+      if (ev.deltaY > 0) {        // Decrement
+        this.hsv.v = clamp(this.hsv.v - 0.01, 0, 1);
+      } else if (ev.deltaY < 0) { // Increment
+        this.hsv.v = clamp(this.hsv.v + 0.01, 0, 1);
+      }
+
+      this.sendUpdate();
+      this.drawAll();
+      this.inputFields.v.valueAsNumber = Math.round(this.hsv.v * 100);
+      this.updateRGBInputFields();
+      this.updateHEXInputField();
     });
 
     // Setup red listeners ---------------------------------------------------------------------------------------------
@@ -700,6 +750,27 @@ export class ColorPicker {
       }
     });
 
+    this.inputFields.r.addEventListener("wheel", (ev: WheelEvent) => {
+      ev.preventDefault();
+
+      const oldRGB = this.hsv.rgb();
+      let r = oldRGB.r;
+      if (ev.deltaY > 0) {        // Decrement
+        r = clamp(r - 1, 0, 255);
+      } else if (ev.deltaY < 0) { // Increment
+        r = clamp(r + 1, 0, 255);
+      }
+
+      this.hsv = d3HSV(`rgb(${Math.round(r)},${Math.round(oldRGB.g)},${Math.round(oldRGB.b)})`);
+
+      this.validateHueAndSaturation();
+      this.sendUpdate();
+      this.drawAll();
+      this.inputFields.r.valueAsNumber = Math.round(r);
+      this.updateHSVInputFields();
+      this.updateHEXInputField();
+    });
+
     // Setup green listeners -------------------------------------------------------------------------------------------
 
     this.inputFields.g.addEventListener("input", (ev: InputEvent) => {
@@ -736,6 +807,27 @@ export class ColorPicker {
       }
     });
 
+    this.inputFields.g.addEventListener("wheel", (ev: WheelEvent) => {
+      ev.preventDefault();
+
+      const oldRGB = this.hsv.rgb();
+      let g = oldRGB.g;
+      if (ev.deltaY > 0) {        // Decrement
+        g = clamp(g - 1, 0, 255);
+      } else if (ev.deltaY < 0) { // Increment
+        g = clamp(g + 1, 0, 255);
+      }
+
+      this.hsv = d3HSV(`rgb(${Math.round(oldRGB.r)},${Math.round(g)},${Math.round(oldRGB.b)})`);
+
+      this.validateHueAndSaturation();
+      this.sendUpdate();
+      this.drawAll();
+      this.inputFields.g.valueAsNumber = Math.round(g);
+      this.updateHSVInputFields();
+      this.updateHEXInputField();
+    });
+
     // Setup blue listeners --------------------------------------------------------------------------------------------
 
     this.inputFields.b.addEventListener("input", (ev: InputEvent) => {
@@ -770,6 +862,27 @@ export class ColorPicker {
       if (ev.key === "Enter") {
         validateBField(ev);
       }
+    });
+
+    this.inputFields.b.addEventListener("wheel", (ev: WheelEvent) => {
+      ev.preventDefault();
+
+      const oldRGB = this.hsv.rgb();
+      let b = oldRGB.b;
+      if (ev.deltaY > 0) {        // Decrement
+        b = clamp(b - 1, 0, 255);
+      } else if (ev.deltaY < 0) { // Increment
+        b = clamp(b + 1, 0, 255);
+      }
+
+      this.hsv = d3HSV(`rgb(${Math.round(oldRGB.r)},${Math.round(oldRGB.g)},${Math.round(b)})`);
+
+      this.validateHueAndSaturation();
+      this.sendUpdate();
+      this.drawAll();
+      this.inputFields.b.valueAsNumber = Math.round(b);
+      this.updateHSVInputFields();
+      this.updateHEXInputField();
     });
 
     // Setup hex listeners ---------------------------------------------------------------------------------------------
