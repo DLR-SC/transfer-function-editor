@@ -75,7 +75,7 @@ export class ColorPicker {
 
   private previewElement: HTMLDivElement;
 
-  constructor(container: HTMLElement | string, options?: {initialColor?: string}) {
+  constructor(container: HTMLElement | string, options?: ColorPickerOptions) {
     if (container) {
       if (typeof container === 'string') {
         this.container = document.querySelector(container);
@@ -86,7 +86,12 @@ export class ColorPicker {
       throw 'No element given!';
     }
 
-    this.hsv = d3HSV(options?.initialColor || '#FFF');
+    const defaultOptions: ColorPickerOptions = {
+      initialColor: '#FFF'
+    }
+    const finalOptions = Object.assign(defaultOptions, options)
+
+    this.hsv = d3HSV(finalOptions.initialColor);
     if (Number.isNaN(this.hsv.h)) {
       this.hsv.h = 180;
     }
@@ -644,6 +649,10 @@ export class ColorPicker {
   private formatHSV(hsv: HSVColor): string {
     return d3HSL(hsv.toString()).formatHex();
   }
+}
+
+export interface ColorPickerOptions {
+  initialColor?: string;
 }
 
 function clamp(number, min, max): number {

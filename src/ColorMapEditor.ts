@@ -19,14 +19,7 @@ export class ColorMapEditor {
   private callback: (colorMap: Array<ColorStop>) => void = () => {
   };
 
-  constructor(
-    container: HTMLElement | string,
-    colorMap: Array<ColorStop> = [
-      { stop: 0, rgb: "blue" },
-      { stop: 0.5, rgb: "white" },
-      { stop: 1, rgb: "red" }
-    ]
-  ) {
+  constructor(container: HTMLElement | string, options?: ColorMapEditorOptions) {
     if (container) {
       if (typeof container === "string") {
         this.container = document.querySelector(container);
@@ -37,9 +30,18 @@ export class ColorMapEditor {
       throw "No element given!";
     }
 
-    this.container.classList.add("tfe-color-map-editor");
+    const defaultOptions: ColorMapEditorOptions = {
+      initialColorMap: [
+        { stop: 0, rgb: "blue" },
+        { stop: 0.5, rgb: "white" },
+        { stop: 1, rgb: "red" }
+      ]
+    }
+    const finalOptions = Object.assign(defaultOptions, options);
 
-    this.colorMap = colorMap;
+    this.colorMap = finalOptions.initialColorMap;
+
+    this.container.classList.add("tfe-color-map-editor");
     this.updateColorRange();
 
     this.canvas = document.createElement("canvas");
@@ -217,7 +219,7 @@ export class ColorMapEditor {
       }
 
       if (stop !== null) {
-        const x = stop.stop * this.canvas.width;
+        const x = stop.stop * this.canvas.width - this.colorPickerContainer.clientWidth / 2;
 
         this.colorPickerContainer.style.left = `${x}px`;
         this.colorPickerContainer.style.visibility = "visible";
@@ -239,4 +241,8 @@ export class ColorMapEditor {
       this.colorPickerContainer.style.visibility = "hidden";
     });
   }
+}
+
+export interface ColorMapEditorOptions {
+  initialColorMap?: Array<ColorStop>;
 }

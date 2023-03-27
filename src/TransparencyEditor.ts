@@ -7,27 +7,19 @@ export class TransparencyEditor {
   private container: HTMLElement;
   private readonly canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private controlPoints: Array<AlphaStop>;
+
+  private transferFunction: Array<AlphaStop>;
+  private colorMap: Array<ColorStop>;
 
   private alphaRange: d3Scale.ScaleLinear<number, number>;
 
   private colorRange: d3Scale.ScaleLinear<string, string>;
-  private colorMap: Array<ColorStop> = [
-    { stop: 0, rgb: "black" },
-    { stop: 1, rgb: "black" }
-  ];
+
   private controlPointSize: number = 7;
 
   private callback: (transferFunction: TransferFunction) => void;
 
-  constructor(
-    container: HTMLElement | string,
-    transferFunction: Array<AlphaStop> = [
-      { stop: 0, alpha: 1 },
-      { stop: 0.5, alpha: 0.5 },
-      { stop: 1, alpha: 0 }
-    ]
-  ) {
+  constructor(container: HTMLElement | string, options?: TransparencyEditorOptions) {
     if (container) {
       if (typeof container === "string") {
         this.container = document.querySelector(container);
@@ -38,9 +30,24 @@ export class TransparencyEditor {
       throw "No element given!";
     }
 
+    const defaultOption: TransparencyEditorOptions = {
+      initialTransferFunction: [
+        { stop: 0, alpha: 1 },
+        { stop: 0.5, alpha: 0.5 },
+        { stop: 1, alpha: 0 }
+      ],
+      initialColorMap: [
+        { stop: 0, rgb: "black" },
+        { stop: 1, rgb: "black" }
+      ]
+    }
+    const finalOptions = Object.assign(defaultOption, options);
+
+    this.transferFunction = finalOptions.initialTransferFunction;
+    this.colorMap = finalOptions.initialColorMap;
+
     this.container.classList.add("tfe-transparency-editor");
 
-    this.controlPoints = transferFunction;
     this.canvas = document.createElement("canvas");
     this.canvas.width = this.container.clientWidth;
     this.canvas.height = this.container.clientHeight;
@@ -59,7 +66,7 @@ export class TransparencyEditor {
   }
 
   public getTransferFunction(): TransferFunction {
-    return { alphaStops: this.controlPoints, colorMap: this.colorMap };
+    return { alphaStops: this.transferFunction, colorMap: this.colorMap };
   }
 
   public getRGB(stop: number): string {
@@ -78,7 +85,7 @@ export class TransparencyEditor {
   }
 
   public addControlPoint(stop, alpha): void {
-    this.controlPoints.push({ stop, alpha });
+    this.transferFunction.push({ stop, alpha });
     this.sortControlPoints();
     this.updateAlphaRange();
     this.sendUpdate();
@@ -87,8 +94,8 @@ export class TransparencyEditor {
 
   public removeControlPointAt(x, y): void {
     let indexToDelete = -1;
-    for (let i = 1; i < this.controlPoints.length - 1; i++) {
-      const controlPoint = this.controlPoints[i];
+    for (let i = 1; i < this.transferFunction.length - 1; i++) {
+      const controlPoint = this.transferFunction[i];
       const dx = controlPoint.stop * this.canvas.width - x;
       const dy = controlPoint.alpha * this.canvas.height - y;
       if (Math.sqrt(dx * dx + dy * dy) < this.controlPointSize) {
@@ -97,7 +104,7 @@ export class TransparencyEditor {
       }
     }
     if (indexToDelete !== -1) {
-      this.controlPoints.splice(indexToDelete, 1);
+      this.transferFunction.splice(indexToDelete, 1);
       this.updateAlphaRange();
       this.sendUpdate();
       this.draw();
@@ -105,14 +112,14 @@ export class TransparencyEditor {
   }
 
   public setAlphaStops(alphaStops: Array<AlphaStop>) {
-    this.controlPoints = alphaStops;
+    this.transferFunction = alphaStops;
     this.updateAlphaRange();
     this.sendUpdate();
     this.draw();
   }
 
   public getAlphaStops(): Array<AlphaStop> {
-    return this.controlPoints;
+    return this.transferFunction;
   }
 
   public setColorMap(colorMap: Array<ColorStop>) {
@@ -124,7 +131,7 @@ export class TransparencyEditor {
 
   private sendUpdate() {
     if (this.callback) {
-      this.callback({ alphaStops: this.controlPoints, colorMap: this.colorMap });
+      this.callback({ alphaStops: this.transferFunction, colorMap: this.colorMap });
     }
   }
 
@@ -139,8 +146,8 @@ export class TransparencyEditor {
   private updateAlphaRange() {
     this.alphaRange = d3Scale
       .scaleLinear<number, number>()
-      .domain(this.controlPoints.map((entry) => entry.stop))
-      .range(this.controlPoints.map((entry) => entry.alpha))
+      .domain(this.transferFunction.map((entry) => entry.stop))
+      .range(this.transferFunction.map((entry) => entry.alpha))
       .interpolate(d3Interpolate.interpolateNumber);
   }
 
@@ -158,9 +165,9 @@ export class TransparencyEditor {
     // Draw the lines between points.
     this.ctx.strokeStyle = "black";
     this.ctx.beginPath();
-    for (let i = 0; i < this.controlPoints.length; i++) {
-      const x = this.controlPoints[i].stop * this.canvas.width;
-      const y = this.controlPoints[i].alpha * this.canvas.height;
+    for (let i = 0; i < this.transferFunction.length; i++) {
+      const x = this.transferFunction[i].stop * this.canvas.width;
+      const y = this.transferFunction[i].alpha * this.canvas.height;
       if (i === 0) {
         this.ctx.moveTo(x, y);
       } else {
@@ -171,9 +178,9 @@ export class TransparencyEditor {
 
     // Draw the control points.
     this.ctx.fillStyle = "white";
-    for (let i = 0; i < this.controlPoints.length; i++) {
-      const x = this.controlPoints[i].stop * this.canvas.width;
-      const y = this.controlPoints[i].alpha * this.canvas.height;
+    for (let i = 0; i < this.transferFunction.length; i++) {
+      const x = this.transferFunction[i].stop * this.canvas.width;
+      const y = this.transferFunction[i].alpha * this.canvas.height;
       this.ctx.strokeStyle = "black";
       this.ctx.beginPath();
       this.ctx.arc(x, y, this.controlPointSize, 0, 2 * Math.PI);
@@ -183,7 +190,7 @@ export class TransparencyEditor {
   }
 
   private sortControlPoints() {
-    this.controlPoints.sort((a, b) => a.stop - b.stop);
+    this.transferFunction.sort((a, b) => a.stop - b.stop);
   }
 
   private pixelToNormalized(x: number, y: number): { stop: number; alpha: number } {
@@ -199,8 +206,8 @@ export class TransparencyEditor {
 
     const checkDragStart = (e: { offsetX: number; offsetY: number }) => {
       dragIndex = -1;
-      for (let i = 0; i < this.controlPoints.length; i++) {
-        const controlPoint = this.controlPoints[i];
+      for (let i = 0; i < this.transferFunction.length; i++) {
+        const controlPoint = this.transferFunction[i];
         const dx = controlPoint.stop * this.canvas.width - e.offsetX;
         const dy = controlPoint.alpha * this.canvas.height - e.offsetY;
         if (Math.sqrt(dx * dx + dy * dy) < this.controlPointSize) {
@@ -220,12 +227,12 @@ export class TransparencyEditor {
           const { stop, alpha } = this.pixelToNormalized(offsetX, offsetY);
 
           if (dragIndex === 0) {
-            this.controlPoints[dragIndex].alpha = alpha;
-          } else if (dragIndex === this.controlPoints.length - 1) {
-            this.controlPoints[dragIndex].alpha = alpha;
+            this.transferFunction[dragIndex].alpha = alpha;
+          } else if (dragIndex === this.transferFunction.length - 1) {
+            this.transferFunction[dragIndex].alpha = alpha;
           } else {
-            this.controlPoints[dragIndex].stop = stop;
-            this.controlPoints[dragIndex].alpha = alpha;
+            this.transferFunction[dragIndex].stop = stop;
+            this.transferFunction[dragIndex].alpha = alpha;
           }
           this.sortControlPoints();
           this.updateAlphaRange();
@@ -266,4 +273,9 @@ export class TransparencyEditor {
       }
     });
   }
+}
+
+export interface TransparencyEditorOptions {
+  initialTransferFunction?: Array<AlphaStop>,
+  initialColorMap?: Array<ColorStop>
 }
