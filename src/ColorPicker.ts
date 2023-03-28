@@ -12,8 +12,8 @@ import { hsv as d3HSV, HSVColor } from "d3-hsv";
  *
  *   cp.onChange((newColor) => {
  *     console.log("rgb: ", newColor.rgb); // rgb: { r: 0, g: 255, b: 255 }
- *     console.log("hsv: ", newColor.hsv); // hsv: { r: 180, g: 1, b: 0.5 }
- *     console.log("hsl: ", newColor.hsl); // hsl: { h: 180, s: 1, l: 1 }
+ *     console.log("hsv: ", newColor.hsv); // hsv: { r: 180, g: 100, b: 50 }
+ *     console.log("hsl: ", newColor.hsl); // hsl: { h: 180, s: 100, l: 100 }
  *     console.log("hex: ", newColor.hex); // hex: "#00ffff"
  *   });
  * ```
