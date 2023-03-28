@@ -221,7 +221,7 @@ export class ColorPicker {
     this.hsv = d3HSV(color);
     this.validateHueAndSaturation();
     this.sendUpdate();
-    this.drawAll();
+    this.updateAll();
   }
 
   /** Sets a new color for the color picker in RGB format. The given values must be in the range of 0 - 255. */
@@ -229,7 +229,7 @@ export class ColorPicker {
     this.hsv = d3HSV(`rgb(${r},${g},${b})`);
     this.validateHueAndSaturation();
     this.sendUpdate();
-    this.drawAll();
+    this.updateAll();
   }
 
   /** Sets a new color for the color picker in RGB format. The given values must be in the range of 0.0 - 1.0. */
@@ -245,7 +245,7 @@ export class ColorPicker {
     this.hsv = d3HSV(`hsl(${h} ${s} ${l})`);
     this.validateHueAndSaturation();
     this.sendUpdate();
-    this.drawAll();
+    this.updateAll();
   }
 
   /** Sets a new color for the color picker in HSL format. The given values must be in the range of 0.0 - 1.0. */
@@ -261,7 +261,7 @@ export class ColorPicker {
     this.hsv = d3HSV(h, s, v);
     this.validateHueAndSaturation();
     this.sendUpdate();
-    this.drawAll();
+    this.updateAll();
   }
 
   /** Sets a new color for the color picker in HSV format. The given values must be in the range of 0.0 - 1.0. */
@@ -341,6 +341,11 @@ export class ColorPicker {
     this.callbacks.forEach((value) => {
       value.callback(value.normalized ? this.getColorNormalized() : this.getColor());
     });
+  }
+
+  private updateAll() {
+    this.drawAll();
+    this.updateInputFields();
   }
 
   /** Draws the saturation-value picker and the hue picker. */
@@ -834,6 +839,13 @@ export class ColorPicker {
         element.classList.remove("tfe-color-picker-input-hex-invalid");
       }
     });
+  }
+
+  /** Updates the text in all input fields. */
+  private updateInputFields() {
+    this.updateHSVInputFields();
+    this.updateRGBInputFields();
+    this.updateHEXInputField();
   }
 
   /** Updates the text inside the hsv input fields. */

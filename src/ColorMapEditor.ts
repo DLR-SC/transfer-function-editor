@@ -211,6 +211,7 @@ export class ColorMapEditor {
       }
     });
 
+    let colorPickerListener = -1;
     this.canvas.addEventListener("click", (e) => {
       if (draggedBefore) {
         return;
@@ -265,10 +266,9 @@ export class ColorMapEditor {
         }
 
         this.colorPickerContainer.style.visibility = "visible";
-        this.colorPicker.addListener(() => {
-        });
+        this.colorPicker.removeListener(colorPickerListener);
         this.colorPicker.setHEX(stop.rgb);
-        this.colorPicker.addListener((newColor) => {
+        colorPickerListener = this.colorPicker.addListener((newColor) => {
           stop.rgb = newColor.hex;
           this.updateColorRange();
           this.draw();
