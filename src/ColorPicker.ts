@@ -1,55 +1,6 @@
 import { hsl as d3HSL } from "d3-color";
 import { hsv as d3HSV, HSVColor } from "d3-hsv";
 
-// Add a stylesheet to the header, that contains the base layout of the color picker.
-document.head.innerHTML += `<style>
-    .tfe-color-picker-root {
-        display: flex;
-        justify-content: center;
-    }
-
-    .tfe-color-picker-sl-picker {
-        border: 1px solid grey;
-    }
-
-    .tfe-color-picker-h-picker {
-        width: 18px;
-        margin-left: 12px;
-        border: 1px solid grey;
-    }
-
-    .tfe-color-picker-input-root {
-        display: grid;
-        grid-template-columns: 36px 60px;
-        grid-template-rows: repeat(3, auto) 20px repeat(3, auto) 20px auto;
-        grid-column-gap: 6px;
-        grid-row-gap: 6px;
-        align-items: center;
-        align-content: space-evenly;
-        margin-left: 12px;
-        margin-bottom: 0;
-    }
-
-    .tfe-color-preview {
-        grid-column: 1 / span 2;
-        height: 50px;
-        border: 1px solid grey;
-    }
-
-    .tfe-color-picker-input-root > label {
-        text-align: right;
-    }
-
-    .tfe-color-picker-input-root > input {
-        text-align: right;
-        font-family: monospace;
-    }
-
-    .tfe-color-picker-input-hex-invalid:focus-visible {
-        outline-color: red;
-    }
-</style>`;
-
 /**
  * This creates a color picker component, that will be embedded in the given container. The color can be chosen with a
  * hue, saturation and value picker, or by text fields for hsv, rgb and hex values. This might be more configurable in
@@ -421,18 +372,18 @@ export class ColorPicker {
     // Draw the hue gradient.
     const gradient = this.hContext.createLinearGradient(0, 0, 0, this.hCanvas.height);
     gradient.addColorStop(0 / 6, "#ff0000");
-    gradient.addColorStop(1 / 6, "#ffff00");
-    gradient.addColorStop(2 / 6, "#00ff00");
+    gradient.addColorStop(1 / 6, "#ff00ff");
+    gradient.addColorStop(2 / 6, "#0000ff");
     gradient.addColorStop(3 / 6, "#00ffff");
-    gradient.addColorStop(4 / 6, "#0000ff");
-    gradient.addColorStop(5 / 6, "#ff00ff");
+    gradient.addColorStop(4 / 6, "#00ff00");
+    gradient.addColorStop(5 / 6, "#ffff00");
     gradient.addColorStop(6 / 6, "#ff0000");
     this.hContext.fillStyle = gradient;
     this.hContext.fillRect(0, 0, this.hCanvas.width, this.hCanvas.height);
 
     // Draw the control point. To ensure visibility everywhere it is an alternating circle in white and black.
     const x = this.hCanvas.width / 2;
-    const y = (this.hsv.h / 360) * this.hCanvas.height;
+    const y = (1 - (this.hsv.h / 360)) * this.hCanvas.height;
     const strokes = 10;
     for (let i = 0; i < strokes; i++) {
       this.hContext.beginPath();
@@ -503,7 +454,7 @@ export class ColorPicker {
     // Gets called when a new value was selected with the mouse.
     const updateH = (y) => {
       // Calculate the new value from the mouse position.
-      this.hsv.h = clamp(Math.round((y / this.CANVAS_SIZE) * 360), 0, 360);
+      this.hsv.h = clamp(Math.round((1 - (y / this.CANVAS_SIZE)) * 360), 0, 360);
       this.backUpHue = this.hsv.h;
 
       // Send an update to the user.
@@ -578,14 +529,14 @@ export class ColorPicker {
       this.drawAll();
       this.updateRGBInputFields();
       this.updateHEXInputField();
-    }
+    };
 
     // Setup hue listeners ---------------------------------------------------------------------------------------------
 
     const onHueUpdate = (value) => {
       if (value !== null) {
         this.hsv.h = value;
-        this.backUpHue = this.hsv.h;
+        this.backUpHue = value;
         onHSVUpdate();
       }
     };
@@ -598,15 +549,15 @@ export class ColorPicker {
     this.inputFields.h.addEventListener("wheel", (ev: WheelEvent) => {
       ev.preventDefault();
 
-      let value = this.hsv.h;
+      let value = Math.round(this.hsv.h);
       if (ev.deltaY > 0) {        // Decrement
-        value = clamp(this.hsv.h - 1, 0, 360);
+        value = clamp(value - 1, 0, 360);
       } else if (ev.deltaY < 0) { // Increment
-        value = clamp(this.hsv.h + 1, 0, 360);
+        value = clamp(value + 1, 0, 360);
       }
 
       onHueUpdate(value);
-      this.inputFields.h.valueAsNumber = this.hsv.h;
+      this.inputFields.h.valueAsNumber = value;
     });
 
     const validateHField = (ev: Event) => {
@@ -716,7 +667,7 @@ export class ColorPicker {
       this.drawAll();
       this.updateHSVInputFields();
       this.updateHEXInputField();
-    }
+    };
 
     // Setup red listeners ---------------------------------------------------------------------------------------------
 
@@ -951,4 +902,58 @@ interface Color {
   hsl: HSL;
   hsv: HSV;
   hex: string;
+}
+
+
+// Add a stylesheet to the header, that contains the base layout of the color picker.
+if (document.head.querySelector("#tfe-color-picker-style") === null) {
+  document.head.insertAdjacentHTML("beforeend", `
+    <style id="tfe-color-picker-style">
+      .tfe-color-picker-root {
+        display: flex;
+        justify-content: center;
+      }
+    
+      .tfe-color-picker-sl-picker {
+        border: 1px solid grey;
+      }
+    
+      .tfe-color-picker-h-picker {
+        width: 18px;
+        margin-left: 12px;
+        border: 1px solid grey;
+      }
+    
+      .tfe-color-picker-input-root {
+        display: grid;
+        grid-template-columns: 36px 60px;
+        grid-template-rows: repeat(3, auto) 20px repeat(3, auto) 20px auto;
+        grid-column-gap: 6px;
+        grid-row-gap: 6px;
+        align-items: center;
+        align-content: space-evenly;
+        margin-left: 12px;
+        margin-bottom: 0;
+      }
+    
+      .tfe-color-preview {
+        grid-column: 1 / span 2;
+        height: 50px;
+        border: 1px solid grey;
+      }
+    
+      .tfe-color-picker-input-root > label {
+        text-align: right;
+      }
+    
+      .tfe-color-picker-input-root > input {
+        text-align: right;
+        font-family: monospace;
+      }
+    
+      .tfe-color-picker-input-hex-invalid:focus-visible {
+        outline-color: red;
+      }
+    </style>`
+  );
 }
