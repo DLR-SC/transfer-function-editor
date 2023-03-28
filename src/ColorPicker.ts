@@ -486,7 +486,7 @@ export class ColorPicker {
     });
 
     // Stop the drag tracking and remove the move listener from the document.
-    document.addEventListener("mouseup", (e) => {
+    document.addEventListener("mouseup", () => {
       if (isDragging && abortController) {
         abortController.abort();
         abortController = null;
@@ -531,7 +531,7 @@ export class ColorPicker {
     });
 
     // Stop the drag tracking and remove the move listener from the document.
-    document.addEventListener("mouseup", (e) => {
+    document.addEventListener("mouseup", () => {
       if (isDragging && abortController) {
         abortController.abort();
         abortController = null;
@@ -540,55 +540,79 @@ export class ColorPicker {
     });
   }
 
+  /**
+   * This function clamps numbers inside a number input field to a given range and returns the number or null if it is
+   * not valid.
+   */
+  private validateInput(element: HTMLInputElement, min: number, max: number): number | null {
+    if (element.valueAsNumber < min) {
+      element.valueAsNumber = min;
+    } else if (element.valueAsNumber > max) {
+      element.valueAsNumber = max;
+    }
+
+    return Number.isFinite(element.valueAsNumber) ? element.valueAsNumber : null;
+  }
+
+  /** This function validates the content of a number input, once it gets submitted or the focus is lost. */
+  private validateFinalInput(element: HTMLInputElement, min: number, max: number): number | null {
+    const value = this.validateInput(element, min, max);
+    if (value === null) {
+      element.valueAsNumber = min;
+      return min;
+    }
+    return null;
+  }
+
   /** Adds all the listeners to the text input fields. It also adds validation, so the values are always valid. */
   private addInputEventListeners() {
-    // This function clamps numbers inside a number input field to a given range and returns the number or null if it is
-    // not valid.
-    const validateInput = (element: HTMLInputElement, min: number, max: number): number | null => {
-      if (element.valueAsNumber < min) {
-        element.valueAsNumber = min;
-      } else if (element.valueAsNumber > max) {
-        element.valueAsNumber = max;
-      }
+    this.setupHSVListeners();
+    this.setupRGBListeners();
+    this.setupHEXListeners();
+  }
 
-      return Number.isFinite(element.valueAsNumber) ? element.valueAsNumber : null;
-    };
-
-    // This function validates the content of a number input, once it gets submitted or the focus is lost.
-    const validateFinal = (element: HTMLInputElement, min: number, max: number): number | null => {
-      const value = validateInput(element, min, max);
-      if (value === null) {
-        element.valueAsNumber = min;
-        return min;
-      }
-      return null;
-    };
+  /** Sets up all listeners for the HSV input fields. */
+  private setupHSVListeners() {
+    const onHSVUpdate = () => {
+      this.sendUpdate();
+      this.drawAll();
+      this.updateRGBInputFields();
+      this.updateHEXInputField();
+    }
 
     // Setup hue listeners ---------------------------------------------------------------------------------------------
 
-    this.inputFields.h.addEventListener("input", (ev: InputEvent) => {
-      const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 360);
+    const onHueUpdate = (value) => {
       if (value !== null) {
         this.hsv.h = value;
         this.backUpHue = this.hsv.h;
-        this.sendUpdate();
-        this.drawAll();
-        this.updateRGBInputFields();
-        this.updateHEXInputField();
+        onHSVUpdate();
       }
+    };
+
+    this.inputFields.h.addEventListener("input", (ev: InputEvent) => {
+      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 360);
+      onHueUpdate(value);
+    });
+
+    this.inputFields.h.addEventListener("wheel", (ev: WheelEvent) => {
+      ev.preventDefault();
+
+      let value = this.hsv.h;
+      if (ev.deltaY > 0) {        // Decrement
+        value = clamp(this.hsv.h - 1, 0, 360);
+      } else if (ev.deltaY < 0) { // Increment
+        value = clamp(this.hsv.h + 1, 0, 360);
+      }
+
+      onHueUpdate(value);
+      this.inputFields.h.valueAsNumber = this.hsv.h;
     });
 
     const validateHField = (ev: Event) => {
       const el = ev.currentTarget as HTMLInputElement;
-      const value = validateFinal(el, 0, 360);
-      if (value !== null) {
-        this.hsv.h = value;
-        this.backUpHue = this.hsv.h;
-        this.sendUpdate();
-        this.drawAll();
-        this.updateRGBInputFields();
-        this.updateHEXInputField();
-      }
+      const value = this.validateFinalInput(el, 0, 360);
+      onHueUpdate(value);
     };
 
     this.inputFields.h.addEventListener("focusout", validateHField);
@@ -598,48 +622,40 @@ export class ColorPicker {
       }
     });
 
-    this.inputFields.h.addEventListener("wheel", (ev: WheelEvent) => {
-      ev.preventDefault();
-
-      if (ev.deltaY > 0) {        // Decrement
-        this.hsv.h = clamp(this.hsv.h - 1, 0, 360);
-      } else if (ev.deltaY < 0) { // Increment
-        this.hsv.h = clamp(this.hsv.h + 1, 0, 360);
-      }
-
-      this.backUpHue = this.hsv.h;
-      this.sendUpdate();
-      this.drawAll();
-      this.inputFields.h.valueAsNumber = this.hsv.h;
-      this.updateRGBInputFields();
-      this.updateHEXInputField();
-    });
 
     // Setup saturation listeners --------------------------------------------------------------------------------------
 
-    this.inputFields.s.addEventListener("input", (ev: InputEvent) => {
-      const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 100);
+    const onSaturationUpdate = (value) => {
       if (value !== null) {
         this.hsv.s = value / 100;
         this.backUpSaturation = this.hsv.s;
-        this.sendUpdate();
-        this.drawSVPicker();
-        this.updateRGBInputFields();
-        this.updateHEXInputField();
+        onHSVUpdate();
       }
+    };
+
+    this.inputFields.s.addEventListener("input", (ev: InputEvent) => {
+      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 100);
+      onSaturationUpdate(value);
+    });
+
+    this.inputFields.s.addEventListener("wheel", (ev: WheelEvent) => {
+      ev.preventDefault();
+
+      let value = Math.round(this.hsv.s * 100);
+      if (ev.deltaY > 0) {        // Decrement
+        value = clamp(value - 1, 0, 100);
+      } else if (ev.deltaY < 0) { // Increment
+        value = clamp(value + 1, 0, 100);
+      }
+
+      onSaturationUpdate(value);
+      this.inputFields.s.valueAsNumber = value;
     });
 
     const validateSField = (ev: Event) => {
       const el = ev.currentTarget as HTMLInputElement;
-      const value = validateFinal(el, 0, 100);
-      if (value !== null) {
-        this.hsv.s = value;
-        this.backUpSaturation = this.hsv.s;
-        this.sendUpdate();
-        this.drawAll();
-        this.updateRGBInputFields();
-        this.updateHEXInputField();
-      }
+      const value = this.validateFinalInput(el, 0, 100);
+      onSaturationUpdate(value);
     };
 
     this.inputFields.s.addEventListener("focusout", validateSField);
@@ -649,46 +665,38 @@ export class ColorPicker {
       }
     });
 
-    this.inputFields.s.addEventListener("wheel", (ev: WheelEvent) => {
-      ev.preventDefault();
-
-      if (ev.deltaY > 0) {        // Decrement
-        this.hsv.s = clamp(this.hsv.s - 0.01, 0, 1);
-      } else if (ev.deltaY < 0) { // Increment
-        this.hsv.s = clamp(this.hsv.s + 0.01, 0, 1);
-      }
-
-      this.backUpSaturation = this.hsv.s;
-      this.sendUpdate();
-      this.drawAll();
-      this.inputFields.s.valueAsNumber = Math.round(this.hsv.s * 100);
-      this.updateRGBInputFields();
-      this.updateHEXInputField();
-    });
-
     // Setup value listeners -------------------------------------------------------------------------------------------
 
-    this.inputFields.v.addEventListener("input", (ev: InputEvent) => {
-      const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 100);
+    const onValueUpdate = (value) => {
       if (value !== null) {
         this.hsv.v = value / 100;
-        this.sendUpdate();
-        this.drawSVPicker();
-        this.updateRGBInputFields();
-        this.updateHEXInputField();
+        onHSVUpdate();
       }
+    };
+
+    this.inputFields.v.addEventListener("input", (ev: InputEvent) => {
+      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 100);
+      onValueUpdate(value);
+    });
+
+    this.inputFields.v.addEventListener("wheel", (ev: WheelEvent) => {
+      ev.preventDefault();
+
+      let value = Math.round(this.hsv.v * 100);
+      if (ev.deltaY > 0) {        // Decrement
+        value = clamp(value - 1, 0, 100);
+      } else if (ev.deltaY < 0) { // Increment
+        value = clamp(value + 1, 0, 100);
+      }
+
+      onValueUpdate(value);
+      this.inputFields.v.valueAsNumber = value;
     });
 
     const validateVField = (ev: Event) => {
       const el = ev.currentTarget as HTMLInputElement;
-      const value = validateFinal(el, 0, 100);
-      if (value !== null) {
-        this.hsv.v = value;
-        this.sendUpdate();
-        this.drawAll();
-        this.updateRGBInputFields();
-        this.updateHEXInputField();
-      }
+      const value = this.validateFinalInput(el, 0, 100);
+      onValueUpdate(value);
     };
 
     this.inputFields.v.addEventListener("focusout", validateVField);
@@ -697,50 +705,52 @@ export class ColorPicker {
         validateVField(ev);
       }
     });
+  }
 
-    this.inputFields.v.addEventListener("wheel", (ev: WheelEvent) => {
-      ev.preventDefault();
-
-      if (ev.deltaY > 0) {        // Decrement
-        this.hsv.v = clamp(this.hsv.v - 0.01, 0, 1);
-      } else if (ev.deltaY < 0) { // Increment
-        this.hsv.v = clamp(this.hsv.v + 0.01, 0, 1);
-      }
-
+  /** Sets up all listeners for the RGB input fields. */
+  private setupRGBListeners() {
+    const onRGBUpdate = (r, g, b) => {
+      this.hsv = d3HSV(`rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`);
+      this.validateHueAndSaturation();
       this.sendUpdate();
       this.drawAll();
-      this.inputFields.v.valueAsNumber = Math.round(this.hsv.v * 100);
-      this.updateRGBInputFields();
+      this.updateHSVInputFields();
       this.updateHEXInputField();
-    });
+    }
 
     // Setup red listeners ---------------------------------------------------------------------------------------------
 
-    this.inputFields.r.addEventListener("input", (ev: InputEvent) => {
-      const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
+    const onRedUpdate = (value) => {
       if (value !== null) {
         const oldRGB = this.hsv.rgb();
-        this.hsv = d3HSV(`rgb(${Math.round(value)},${Math.round(oldRGB.g)},${Math.round(oldRGB.b)})`);
-        this.validateHueAndSaturation();
-        this.sendUpdate();
-        this.drawAll();
-        this.updateHSVInputFields();
-        this.updateHEXInputField();
+        onRGBUpdate(value, oldRGB.g, oldRGB.b);
       }
+    };
+
+    this.inputFields.r.addEventListener("input", (ev: InputEvent) => {
+      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
+      onRedUpdate(value);
+    });
+
+    this.inputFields.r.addEventListener("wheel", (ev: WheelEvent) => {
+      ev.preventDefault();
+
+      const oldRGB = this.hsv.rgb();
+      let value = oldRGB.r;
+      if (ev.deltaY > 0) {        // Decrement
+        value = clamp(value - 1, 0, 255);
+      } else if (ev.deltaY < 0) { // Increment
+        value = clamp(value + 1, 0, 255);
+      }
+
+      onRedUpdate(value);
+      this.inputFields.r.valueAsNumber = Math.round(value);
     });
 
     const validateRField = (ev: Event) => {
       const el = ev.currentTarget as HTMLInputElement;
-      const value = validateFinal(el, 0, 255);
-      if (value !== null) {
-        const oldRGB = this.hsv.rgb();
-        this.hsv = d3HSV(`rgb(${Math.round(value)},${Math.round(oldRGB.g)},${Math.round(oldRGB.b)})`);
-        this.validateHueAndSaturation();
-        this.sendUpdate();
-        this.drawAll();
-        this.updateHSVInputFields();
-        this.updateHEXInputField();
-      }
+      const value = this.validateFinalInput(el, 0, 255);
+      onRedUpdate(value);
     };
 
     this.inputFields.r.addEventListener("focusout", validateRField);
@@ -750,54 +760,39 @@ export class ColorPicker {
       }
     });
 
-    this.inputFields.r.addEventListener("wheel", (ev: WheelEvent) => {
+    // Setup green listeners -------------------------------------------------------------------------------------------
+
+    const onGreenUpdate = (value) => {
+      if (value !== null) {
+        const oldRGB = this.hsv.rgb();
+        onRGBUpdate(oldRGB.r, value, oldRGB.b);
+      }
+    };
+
+    this.inputFields.g.addEventListener("input", (ev: InputEvent) => {
+      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
+      onGreenUpdate(value);
+    });
+
+    this.inputFields.g.addEventListener("wheel", (ev: WheelEvent) => {
       ev.preventDefault();
 
       const oldRGB = this.hsv.rgb();
-      let r = oldRGB.r;
+      let value = oldRGB.g;
       if (ev.deltaY > 0) {        // Decrement
-        r = clamp(r - 1, 0, 255);
+        value = clamp(value - 1, 0, 255);
       } else if (ev.deltaY < 0) { // Increment
-        r = clamp(r + 1, 0, 255);
+        value = clamp(value + 1, 0, 255);
       }
 
-      this.hsv = d3HSV(`rgb(${Math.round(r)},${Math.round(oldRGB.g)},${Math.round(oldRGB.b)})`);
-
-      this.validateHueAndSaturation();
-      this.sendUpdate();
-      this.drawAll();
-      this.inputFields.r.valueAsNumber = Math.round(r);
-      this.updateHSVInputFields();
-      this.updateHEXInputField();
-    });
-
-    // Setup green listeners -------------------------------------------------------------------------------------------
-
-    this.inputFields.g.addEventListener("input", (ev: InputEvent) => {
-      const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
-      if (value !== null) {
-        const oldRGB = this.hsv.rgb();
-        this.hsv = d3HSV(`rgb(${Math.round(oldRGB.r)},${Math.round(value)},${Math.round(oldRGB.b)})`);
-        this.validateHueAndSaturation();
-        this.sendUpdate();
-        this.drawAll();
-        this.updateHSVInputFields();
-        this.updateHEXInputField();
-      }
+      onGreenUpdate(value);
+      this.inputFields.g.valueAsNumber = Math.round(value);
     });
 
     const validateGField = (ev: Event) => {
       const el = ev.currentTarget as HTMLInputElement;
-      const value = validateFinal(el, 0, 255);
-      if (value !== null) {
-        const oldRGB = this.hsv.rgb();
-        this.hsv = d3HSV(`rgb(${Math.round(oldRGB.r)},${Math.round(value)},${Math.round(oldRGB.b)})`);
-        this.validateHueAndSaturation();
-        this.sendUpdate();
-        this.drawAll();
-        this.updateHSVInputFields();
-        this.updateHEXInputField();
-      }
+      const value = this.validateFinalInput(el, 0, 255);
+      onGreenUpdate(value);
     };
 
     this.inputFields.g.addEventListener("focusout", validateGField);
@@ -807,54 +802,39 @@ export class ColorPicker {
       }
     });
 
-    this.inputFields.g.addEventListener("wheel", (ev: WheelEvent) => {
+    // Setup blue listeners --------------------------------------------------------------------------------------------
+
+    const onBlueUpdate = (value) => {
+      if (value !== null) {
+        const oldRGB = this.hsv.rgb();
+        onRGBUpdate(oldRGB.r, oldRGB.g, value);
+      }
+    };
+
+    this.inputFields.b.addEventListener("input", (ev: InputEvent) => {
+      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
+      onBlueUpdate(value);
+    });
+
+    this.inputFields.b.addEventListener("wheel", (ev: WheelEvent) => {
       ev.preventDefault();
 
       const oldRGB = this.hsv.rgb();
-      let g = oldRGB.g;
+      let value = oldRGB.b;
       if (ev.deltaY > 0) {        // Decrement
-        g = clamp(g - 1, 0, 255);
+        value = clamp(value - 1, 0, 255);
       } else if (ev.deltaY < 0) { // Increment
-        g = clamp(g + 1, 0, 255);
+        value = clamp(value + 1, 0, 255);
       }
 
-      this.hsv = d3HSV(`rgb(${Math.round(oldRGB.r)},${Math.round(g)},${Math.round(oldRGB.b)})`);
-
-      this.validateHueAndSaturation();
-      this.sendUpdate();
-      this.drawAll();
-      this.inputFields.g.valueAsNumber = Math.round(g);
-      this.updateHSVInputFields();
-      this.updateHEXInputField();
-    });
-
-    // Setup blue listeners --------------------------------------------------------------------------------------------
-
-    this.inputFields.b.addEventListener("input", (ev: InputEvent) => {
-      const value = validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
-      if (value !== null) {
-        const oldRGB = this.hsv.rgb();
-        this.hsv = d3HSV(`rgb(${Math.round(oldRGB.r)},${Math.round(oldRGB.g)},${Math.round(value)})`);
-        this.validateHueAndSaturation();
-        this.sendUpdate();
-        this.drawAll();
-        this.updateHSVInputFields();
-        this.updateHEXInputField();
-      }
+      onBlueUpdate(value);
+      this.inputFields.b.valueAsNumber = Math.round(value);
     });
 
     const validateBField = (ev: Event) => {
       const el = ev.currentTarget as HTMLInputElement;
-      const value = validateFinal(el, 0, 255);
-      if (value !== null) {
-        const oldRGB = this.hsv.rgb();
-        this.hsv = d3HSV(`rgb(${Math.round(oldRGB.r)},${Math.round(oldRGB.g)},${Math.round(value)})`);
-        this.validateHueAndSaturation();
-        this.sendUpdate();
-        this.drawAll();
-        this.updateHSVInputFields();
-        this.updateHEXInputField();
-      }
+      const value = this.validateFinalInput(el, 0, 255);
+      onBlueUpdate(value);
     };
 
     this.inputFields.b.addEventListener("focusout", validateBField);
@@ -863,30 +843,10 @@ export class ColorPicker {
         validateBField(ev);
       }
     });
+  }
 
-    this.inputFields.b.addEventListener("wheel", (ev: WheelEvent) => {
-      ev.preventDefault();
-
-      const oldRGB = this.hsv.rgb();
-      let b = oldRGB.b;
-      if (ev.deltaY > 0) {        // Decrement
-        b = clamp(b - 1, 0, 255);
-      } else if (ev.deltaY < 0) { // Increment
-        b = clamp(b + 1, 0, 255);
-      }
-
-      this.hsv = d3HSV(`rgb(${Math.round(oldRGB.r)},${Math.round(oldRGB.g)},${Math.round(b)})`);
-
-      this.validateHueAndSaturation();
-      this.sendUpdate();
-      this.drawAll();
-      this.inputFields.b.valueAsNumber = Math.round(b);
-      this.updateHSVInputFields();
-      this.updateHEXInputField();
-    });
-
-    // Setup hex listeners ---------------------------------------------------------------------------------------------
-
+  /** Sets up all listeners for the HEX input field. */
+  private setupHEXListeners() {
     this.inputFields.hex.addEventListener("input", (ev: InputEvent) => {
       const element = ev.currentTarget as HTMLInputElement;
       const value = element.value;
