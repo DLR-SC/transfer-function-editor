@@ -6,12 +6,12 @@ import {
 } from "../../dist/transfer-function-editor.modern";
 
 const tf = new TransferFunctionEditor("#tf-editor");
-tf.onChange((tf) => {
+tf.addListener((tf) => {
   document.querySelector("#tf-output").innerText = JSON.stringify(tf, null, 2);
 });
 
 const tp = new TransparencyEditor("#tp");
-tp.onChange((tf) => {
+tp.addListener((tf) => {
   document.querySelector("#tp-output").innerText = JSON.stringify(tf, null, 2);
 });
 
@@ -23,12 +23,12 @@ const cm = new ColorMapEditor("#cm", {
   ]
 });
 
-cm.onChange((cm) => {
+cm.addListener((cm) => {
   document.querySelector("#cm-output").innerText = JSON.stringify(cm, null, 2);
 });
 
 const cp = new ColorPicker("#cp", { initialColor: "cyan" });
 
-cp.onChange((c) => {
+cp.addListener((c) => {
   document.querySelector("#cp-output").innerText = JSON.stringify(c, null, 2);
 });

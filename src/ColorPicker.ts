@@ -10,12 +10,21 @@ import { hsv as d3HSV, HSVColor } from "d3-hsv";
  * ```js
  *   const cp = new ColorPicker("#color-picker-container", { initialColor: "cyan" });
  *
- *   cp.onChange((newColor) => {
+ *   // Default
+ *   cp.addListener((newColor) => {
  *     console.log("rgb: ", newColor.rgb); // rgb: { r: 0, g: 255, b: 255 }
  *     console.log("hsv: ", newColor.hsv); // hsv: { r: 180, g: 100, b: 50 }
  *     console.log("hsl: ", newColor.hsl); // hsl: { h: 180, s: 100, l: 100 }
  *     console.log("hex: ", newColor.hex); // hex: "#00ffff"
  *   });
+ *
+ *   // Normalized
+ *   cp.addListener((newColor) => {
+ *     console.log("rgb: ", newColor.rgb); // rgb: { r: 0.0, g: 1.0, b: 1.0 }
+ *     console.log("hsv: ", newColor.hsv); // hsv: { r: 0.5, g: 1.0, b: 0.5 }
+ *     console.log("hsl: ", newColor.hsl); // hsl: { h: 0.5, s: 1.0, l: 1.0 }
+ *     console.log("hex: ", newColor.hex); // hex: "#00ffff"
+ *   }, true);
  * ```
  */
 export class ColorPicker {
@@ -56,10 +65,8 @@ export class ColorPicker {
   private controlPointSize: number = 7;
 
   /** This gets called, when the color changes to notify users of this library. */
-  private callback: (newColor: Color) => void;
-
-  /** This determines, if the callback receives colors in normalized space (0.0 - 1.0). */
-  private normalizedCallback: boolean;
+  private callbacks: Map<number, ColorCallback> = new Map();
+  private callbackCounter = 0;
 
   /** All the HTMLElements for manual editing the hsv, rgb and hex values. */
   private inputFields: {
@@ -194,10 +201,16 @@ export class ColorPicker {
    * @param callback   The function that gets called whenever the color changes.
    * @param normalized If true, the callback receives colors in normalized (0.0 - 1.0) form.
    */
-  public onChange(callback: (newColor: Color) => void, normalized: boolean = false) {
-    this.normalizedCallback = normalized;
-    this.callback = callback;
-    this.callback(normalized ? this.getColorNormalized() : this.getColor());
+  public addListener(callback: (newColor: Color) => void, normalized: boolean = false): number {
+    const id = this.callbackCounter++;
+    this.callbacks.set(id, { callback, normalized });
+    callback(normalized ? this.getColorNormalized() : this.getColor());
+    return id;
+  }
+
+  /** Removes the listener with the given id. */
+  public removeListener(id: number) {
+    this.callbacks.delete(id);
   }
 
   /**
@@ -325,10 +338,9 @@ export class ColorPicker {
    */
   private sendUpdate() {
     this.previewElement.style.backgroundColor = this.getHEX();
-
-    if (this.callback) {
-      this.callback(this.normalizedCallback ? this.getColorNormalized() : this.getColor());
-    }
+    this.callbacks.forEach((value) => {
+      value.callback(value.normalized ? this.getColorNormalized() : this.getColor());
+    });
   }
 
   /** Draws the saturation-value picker and the hue picker. */
@@ -904,6 +916,7 @@ interface Color {
   hex: string;
 }
 
+type ColorCallback = { callback: (newColor: Color) => void, normalized: boolean };
 
 // Add a stylesheet to the header, that contains the base layout of the color picker.
 if (document.head.querySelector("#tfe-color-picker-style") === null) {

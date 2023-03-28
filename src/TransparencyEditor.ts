@@ -17,7 +17,8 @@ export class TransparencyEditor {
 
   private controlPointSize: number = 7;
 
-  private callback: (transferFunction: TransferFunction) => void;
+  private callbacks: Map<number, (transferFunction: TransferFunction) => void> = new Map();
+  private callbackCounter = 0;
 
   constructor(container: HTMLElement | string, options?: TransparencyEditorOptions) {
     if (container) {
@@ -40,7 +41,7 @@ export class TransparencyEditor {
         { stop: 0, rgb: "black" },
         { stop: 1, rgb: "black" }
       ]
-    }
+    };
     const finalOptions = Object.assign(defaultOption, options);
 
     this.transferFunction = finalOptions.initialTransferFunction;
@@ -60,9 +61,15 @@ export class TransparencyEditor {
     this.addEventListeners();
   }
 
-  public onChange(callback: (transferFunction: TransferFunction) => void) {
-    this.callback = callback;
-    this.callback(this.getTransferFunction());
+  public addListener(callback: (transferFunction: TransferFunction) => void): number {
+    const id = this.callbackCounter++;
+    this.callbacks.set(id, callback);
+    callback(this.getTransferFunction());
+    return id;
+  }
+
+  public removeListener(id: number) {
+    this.callbacks.delete(id);
   }
 
   public getTransferFunction(): TransferFunction {
@@ -130,9 +137,7 @@ export class TransparencyEditor {
   }
 
   private sendUpdate() {
-    if (this.callback) {
-      this.callback({ alphaStops: this.transferFunction, colorMap: this.colorMap });
-    }
+    this.callbacks.forEach((value) => value({ alphaStops: this.transferFunction, colorMap: this.colorMap }));
   }
 
   private updateColorRange() {

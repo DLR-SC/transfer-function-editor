@@ -9,7 +9,8 @@ export class TransferFunctionEditor {
 
   private colorMapEditor: ColorMapEditor;
 
-  private callback: (transferFunction: TransferFunction) => void = null;
+  private callbacks: Map<number, (transferFunction: TransferFunction) => void> = new Map();
+  private callbackCounter = 0;
 
   constructor(container: HTMLElement | string, options?: TransferFunctionEditorOptions) {
     if (container) {
@@ -39,20 +40,24 @@ export class TransferFunctionEditor {
     this.container.append(colorMapEditorElement);
     this.colorMapEditor = new ColorMapEditor(colorMapEditorElement, finalOptions);
 
-    this.colorMapEditor.onChange((colorMap) => this.transparencyEditor.setColorMap(colorMap));
+    this.colorMapEditor.addListener((colorMap) => this.transparencyEditor.setColorMap(colorMap));
 
     this.transparencyEditor.setColorMap(this.colorMapEditor.getColorMap());
 
-    this.transparencyEditor.onChange((tf) => {
-      if (this.callback) {
-        this.callback(tf);
-      }
+    this.transparencyEditor.addListener((tf) => {
+      this.callbacks.forEach((value) => value(tf));
     });
   }
 
-  public onChange(callback: (transferFunction: TransferFunction) => void) {
-    this.callback = callback;
-    this.callback(this.transparencyEditor.getTransferFunction());
+  public addListener(callback: (transferFunction: TransferFunction) => void): number {
+    const id = this.callbackCounter++;
+    this.callbacks.set(id, callback);
+    callback(this.transparencyEditor.getTransferFunction());
+    return id;
+  }
+
+  public removeListener(id: number) {
+    this.callbacks.delete(id);
   }
 
   public setAlphaStops(alphaStops: Array<AlphaStop>) {

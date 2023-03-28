@@ -16,8 +16,8 @@ export class ColorMapEditor {
   private colorPickerContainer: HTMLDivElement;
   private colorPicker: ColorPicker;
 
-  private callback: (colorMap: Array<ColorStop>) => void = () => {
-  };
+  private callbacks: Map<number, (colorMap: Array<ColorStop>) => void> = new Map();
+  private callbackCounter = 0;
 
   constructor(container: HTMLElement | string, options?: ColorMapEditorOptions) {
     if (container) {
@@ -70,16 +70,26 @@ export class ColorMapEditor {
     this.colorMap = colorMap;
     this.updateColorRange();
     this.draw();
-    this.callback(this.colorMap);
+    this.sendUpdates();
   }
 
   public getColorMap(): Array<ColorStop> {
     return this.colorMap;
   }
 
-  public onChange(callback: (colorMap: Array<ColorStop>) => void) {
-    this.callback = callback;
-    this.callback(this.colorMap);
+  public addListener(callback: (colorMap: Array<ColorStop>) => void): number {
+    const id = this.callbackCounter++;
+    this.callbacks.set(id, callback);
+    callback(this.colorMap);
+    return id;
+  }
+
+  public removeListener(id: number) {
+    this.callbacks.delete(id);
+  }
+
+  private sendUpdates() {
+    this.callbacks.forEach((value) => value(this.colorMap));
   }
 
   private draw() {
@@ -142,7 +152,7 @@ export class ColorMapEditor {
           this.colorMap.sort((a, b) => a.stop - b.stop);
           this.updateColorRange();
           this.draw();
-          this.callback(this.colorMap);
+          this.sendUpdates();
           draggedBefore = true;
         }, { signal: abortController.signal });
       }
@@ -168,7 +178,7 @@ export class ColorMapEditor {
         this.colorMap.sort((a, b) => a.stop - b.stop);
         this.updateColorRange();
         this.draw();
-        this.callback(this.colorMap);
+        this.sendUpdates();
         checkDragStart(e);
       } else if (e.button === 1) {
         // Middle click
@@ -187,7 +197,7 @@ export class ColorMapEditor {
           this.colorMap.splice(indexToDelete, 1);
           this.updateColorRange();
           this.draw();
-          this.callback(this.colorMap);
+          this.sendUpdates();
         }
       }
     });
@@ -255,14 +265,14 @@ export class ColorMapEditor {
         }
 
         this.colorPickerContainer.style.visibility = "visible";
-        this.colorPicker.onChange(() => {
+        this.colorPicker.addListener(() => {
         });
         this.colorPicker.setHEX(stop.rgb);
-        this.colorPicker.onChange((newColor) => {
+        this.colorPicker.addListener((newColor) => {
           stop.rgb = newColor.hex;
           this.updateColorRange();
           this.draw();
-          this.callback(this.colorMap);
+          this.sendUpdates();
         });
       }
     });
