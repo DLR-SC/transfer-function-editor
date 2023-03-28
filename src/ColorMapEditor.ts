@@ -36,7 +36,7 @@ export class ColorMapEditor {
         { stop: 0.5, rgb: "white" },
         { stop: 1, rgb: "red" }
       ]
-    }
+    };
     const finalOptions = Object.assign(defaultOptions, options);
 
     this.colorMap = finalOptions.initialColorMap;
@@ -59,7 +59,6 @@ export class ColorMapEditor {
     this.colorPickerContainer.style.border = "1px solid black";
     this.colorPickerContainer.style.visibility = "hidden";
     this.colorPickerContainer.style.position = "relative";
-    this.colorPickerContainer.style.bottom = `${this.canvas.height / 2}px`;
     this.container.appendChild(this.colorPickerContainer);
     this.colorPicker = new ColorPicker(this.colorPickerContainer);
 
@@ -211,17 +210,50 @@ export class ColorMapEditor {
       let stop = null;
       for (let i = 0; i < this.colorMap.length; i++) {
         stop = this.colorMap[i];
-        const dx = stop.stop * this.canvas.width - e.offsetX;
-        const dy = 0.5 * this.canvas.height - e.offsetY;
-        if (Math.sqrt(dx * dx + dy * dy) < this.controlPointSize) {
+        const dx = Math.abs(stop.stop * this.canvas.width - e.offsetX);
+        if (dx < this.controlPointSize) {
           break;
         }
       }
 
       if (stop !== null) {
-        const x = stop.stop * this.canvas.width - this.colorPickerContainer.clientWidth / 2;
+        // Figure out, where to position the color picker popup, depending on the available space.
+        const pageY = this.canvas.height / 2 + this.canvas.getBoundingClientRect().y;
+        const viewPortHeight = window.innerHeight;
+        const cpHeight = this.colorPickerContainer.clientHeight;
 
-        this.colorPickerContainer.style.left = `${x}px`;
+        if (pageY + cpHeight < viewPortHeight) {
+          // Show below the point
+          const y = this.canvas.height / 2;
+          this.colorPickerContainer.style.bottom = `${y}px`;
+        } else if (pageY - cpHeight > 0) {
+          // Show above the point
+          const y = this.canvas.height / 2 + cpHeight;
+          this.colorPickerContainer.style.bottom = `${y}px`;
+        } else {
+          // Show vertically centered on the point
+          const y = this.canvas.height / 2 + cpHeight / 2;
+          this.colorPickerContainer.style.bottom = `${y}px`;
+        }
+
+        const pageX = stop.stop * this.canvas.width + this.canvas.getBoundingClientRect().x;
+        const viewPortWidth = window.innerWidth;
+        const cpWidth = this.colorPickerContainer.clientWidth;
+
+        if (pageX + cpWidth < viewPortWidth) {
+          // Show right of the point
+          const x = stop.stop * this.canvas.width;
+          this.colorPickerContainer.style.left = `${x}px`;
+        } else if (pageX - cpWidth > 0) {
+          // Show left of the point
+          const x = stop.stop * this.canvas.width - cpWidth;
+          this.colorPickerContainer.style.left = `${x}px`;
+        } else {
+          // Show horizontally centered on the point
+          const x = stop.stop * this.canvas.width - cpWidth / 2;
+          this.colorPickerContainer.style.left = `${x}px`;
+        }
+
         this.colorPickerContainer.style.visibility = "visible";
         this.colorPicker.onChange(() => {
         });
@@ -240,6 +272,13 @@ export class ColorMapEditor {
     document.addEventListener("click", () => {
       this.colorPickerContainer.style.visibility = "hidden";
     });
+
+    const resizeObserver = new ResizeObserver(() => {
+      this.canvas.width = this.container.clientWidth;
+      this.canvas.height = this.container.clientHeight;
+      this.draw();
+    });
+    resizeObserver.observe(this.container);
   }
 }
 

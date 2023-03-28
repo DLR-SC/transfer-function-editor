@@ -272,6 +272,13 @@ export class TransparencyEditor {
         dragIndex = -1;
       }
     });
+
+    const resizeObserver = new ResizeObserver(() => {
+      this.canvas.width = this.container.clientWidth;
+      this.canvas.height = this.container.clientHeight;
+      this.draw();
+    });
+    resizeObserver.observe(this.container);
   }
 }
 
