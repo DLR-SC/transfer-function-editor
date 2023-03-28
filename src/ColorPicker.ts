@@ -343,6 +343,7 @@ export class ColorPicker {
     });
   }
 
+  /** Draws the canvases and updates the input fields. */
   private updateAll() {
     this.drawAll();
     this.updateInputFields();

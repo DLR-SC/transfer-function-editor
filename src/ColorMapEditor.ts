@@ -84,8 +84,8 @@ export class ColorMapEditor {
     this.colorMap = finalOptions.initialColorMap;
 
     this.container.classList.add("tfe-color-map-editor");
-    this.updateColorRange();
 
+    // Prepare the canvas and the context.
     this.canvas = document.createElement("canvas");
     this.canvas.width = this.container.clientWidth;
     this.canvas.height = this.container.clientHeight;
@@ -93,6 +93,7 @@ export class ColorMapEditor {
     this.container.appendChild(this.canvas);
     this.ctx = this.canvas.getContext("2d", { alpha: false });
 
+    // Prepare the container for the color picker and initialize it.
     this.colorPickerContainer = document.createElement("div");
     this.colorPickerContainer.classList.add("tfe-color-map-editor-color-picker-container");
     this.colorPickerContainer.style.width = "fit-content";
@@ -104,10 +105,15 @@ export class ColorMapEditor {
     this.container.appendChild(this.colorPickerContainer);
     this.colorPicker = new ColorPicker(this.colorPickerContainer);
 
+    // Initial draw.
+    this.updateColorRange();
     this.draw();
+
+    // Add all event listeners.
     this.addEventListeners();
   }
 
+  /** Set a new color map. */
   public setColorMap(colorMap: Array<ColorStop>) {
     this.colorMap = colorMap;
     this.updateColorRange();
@@ -115,10 +121,16 @@ export class ColorMapEditor {
     this.sendUpdates();
   }
 
+  /** Get the current color map. */
   public getColorMap(): Array<ColorStop> {
     return this.colorMap;
   }
 
+  /**
+   * Register a callback that gets called, when the color map changes.
+   *
+   * @param callback   The function that gets called whenever the color map changes.
+   */
   public addListener(callback: (colorMap: Array<ColorStop>) => void): number {
     const id = this.callbackCounter++;
     this.callbacks.set(id, callback);
@@ -126,20 +138,25 @@ export class ColorMapEditor {
     return id;
   }
 
+  /** Removes the listener with the given id. */
   public removeListener(id: number) {
     this.callbacks.delete(id);
   }
 
+  /** This function notifies all listeners to this color map editor. */
   private sendUpdates() {
     this.callbacks.forEach((value) => value(this.colorMap));
   }
 
+  /** Draws the gradient and the control points. */
   private draw() {
+    // Draw the gradient.
     for (let i = 0; i < this.canvas.width; ++i) {
       this.ctx.fillStyle = this.colorRange(i / (this.canvas.width - 1));
       this.ctx.fillRect(i, 0, 1, this.canvas.height);
     }
 
+    // Draw the control points. To ensure visibility everywhere it is an alternating circle in white and black.
     this.ctx.fillStyle = "transparent";
     for (let i = 0; i < this.colorMap.length; i++) {
       const x = this.colorMap[i].stop * this.canvas.width;
@@ -154,6 +171,7 @@ export class ColorMapEditor {
     }
   }
 
+  /** This updates the d3-color range, which helps when drawing the gradient. */
   private updateColorRange() {
     this.colorRange = d3Scale
       .scaleLinear<string, number>()
@@ -162,12 +180,14 @@ export class ColorMapEditor {
       .interpolate(d3Interpolate.interpolateHslLong);
   }
 
+  /** Adds event listeners for adding, removing and moving control points as well as showing the color picker. */
   private addEventListeners() {
     let draggedBefore = false;
     let isDragging: boolean = false;
     let dragIndex: number = -1;
     let abortController: AbortController = null;
 
+    // TODO
     const checkDragStart = (e: { offsetX: number; offsetY: number }) => {
       dragIndex = -1;
       for (let i = 0; i < this.colorMap.length; i++) {
@@ -334,6 +354,18 @@ export class ColorMapEditor {
   }
 }
 
+/**
+ * The config options for the {@link ColorMapEditor} component.
+ */
 export interface ColorMapEditorOptions {
+  /**
+   * The initial color map.
+   * Default:
+   * [
+   *   { stop: 0, rgb: "blue" },
+   *   { stop: 0.5, rgb: "white" },
+   *   { stop: 1, rgb: "red" }
+   * ]
+   */
   initialColorMap?: Array<ColorStop>;
 }
