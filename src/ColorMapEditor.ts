@@ -3,23 +3,61 @@ import { ColorStop } from "./Types";
 import * as d3Interpolate from "d3-interpolate";
 import { ColorPicker } from "./ColorPicker";
 
+/**
+ * This creates a color map editor component, where the user can create a color gradient using stops and colors.
+ *
+ * @example
+ * ```
+ *   const cm = new ColorMapEditor("#cm", {
+ *     initialColorMap: [
+ *       { stop: 0, rgb: "#0f0" },
+ *       { stop: 0.5, rgb: "#f00" },
+ *       { stop: 1, rgb: "#000" }
+ *     ]
+ *   });
+ *
+ *   cm.addListener((newColorMap) => {
+ *     console.log(newColorMap); // [{stop: 0, rgb: "#0f0"},{stop: 0.5, rgb: "#f00"},{stop: 1, rgb: "#000"}]
+ *   });
+ * ```
+ */
 export class ColorMapEditor {
-  private container: HTMLElement;
+  /** The root element, in which the color map editor gets embedded. */
+  private readonly container: HTMLElement;
+
+  /** The gradient and stops are painted in here. It also handles mouse input. */
   private readonly canvas: HTMLCanvasElement;
+
+  /** The context for the canvas for convenience. */
   private ctx: CanvasRenderingContext2D;
+
+  /** This helps rendering the gradient in the canvas. */
   private colorRange: d3Scale.ScaleLinear<string, string>;
 
+  /** This is the color map that everything revolves around. */
   private colorMap: Array<ColorStop>;
 
+  /** The size of the control points. Might become configurable in the future. */
   private controlPointSize: number = 7;
 
-  private colorPickerContainer: HTMLDivElement;
+  /** The color picker for editing control point colors is embedded in this div. */
+  private readonly colorPickerContainer: HTMLDivElement;
+
+  /** The color picker for editing control point colors. */
   private colorPicker: ColorPicker;
 
+  /** This gets called, when the color changes to notify users of this library. */
   private callbacks: Map<number, (colorMap: Array<ColorStop>) => void> = new Map();
   private callbackCounter = 0;
 
+  /**
+   * Creates a new color map editor inside the given container.
+   *
+   * @param container Either an HTMLElement or a query string to an element, in which the color picker will be embedded.
+   * @param options   Can be used to configure the color map editor. See {@link ColorMapEditorOptions}.
+   */
   constructor(container: HTMLElement | string, options?: ColorMapEditorOptions) {
+    // Figure out which element we want to embed in.
     if (container) {
       if (typeof container === "string") {
         this.container = document.querySelector(container);
@@ -30,6 +68,7 @@ export class ColorMapEditor {
       throw "No element given!";
     }
 
+    // Set all defaults.
     const defaultOptions: ColorMapEditorOptions = {
       initialColorMap: [
         { stop: 0, rgb: "blue" },
@@ -37,6 +76,9 @@ export class ColorMapEditor {
         { stop: 1, rgb: "red" }
       ]
     };
+
+    // Merge the options with the defaults.
+    // !!! DON'T USE options AND defaultOptions AFTER THIS LINE !!!
     const finalOptions = Object.assign(defaultOptions, options);
 
     this.colorMap = finalOptions.initialColorMap;
@@ -202,7 +244,7 @@ export class ColorMapEditor {
       }
     });
 
-    document.addEventListener("mouseup", (e) => {
+    document.addEventListener("mouseup", () => {
       if (isDragging && abortController) {
         abortController.abort();
         abortController = null;
