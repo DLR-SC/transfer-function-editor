@@ -940,6 +940,7 @@ if (document.head.querySelector("#tfe-color-picker-style") === null) {
         grid-column: 1 / span 2;
         height: 50px;
         border: 1px solid grey;
+        border-radius: 25px;
       }
     
       .tfe-color-picker-input-root > label {
