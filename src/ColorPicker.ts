@@ -1,5 +1,5 @@
 import { hsl as d3HSL } from "d3-color";
-import { hsv, hsv as d3HSV, HSVColor } from "d3-hsv";
+import { hsv as d3HSV, HSVColor } from "d3-hsv";
 
 // Add a stylesheet to the header, that contains the base layout of the color picker.
 document.head.innerHTML += `<style>
