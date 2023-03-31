@@ -182,13 +182,25 @@ export class ColorMapEditor {
 
   /** Adds event listeners for adding, removing and moving control points as well as showing the color picker. */
   private addEventListeners() {
-    let draggedBefore = false;
+    // This flag prevents click events to trigger when dragging control points small distances.
+    let draggedBefore: boolean = false;
+
+    // Tracks if the user is currently dragging a control point.
     let isDragging: boolean = false;
+
+    // The index of the currently dragged control point.
     let dragIndex: number = -1;
+
+    // The AbortController is for removing the mousemove listener from the document, when the user stops dragging.
     let abortController: AbortController = null;
 
-    // TODO
+
+    /**
+     * This function checks if a control point was selected, sets the dragIndex and isDragging fields and attaches a
+     * mouse move listener to the document. This allows for more consistent control.
+     */
     const checkDragStart = (e: { offsetX: number; offsetY: number }) => {
+      // Figure out which control point was selected.
       dragIndex = -1;
       for (let i = 0; i < this.colorMap.length; i++) {
         const stop = this.colorMap[i];
@@ -201,6 +213,7 @@ export class ColorMapEditor {
       }
 
       if (isDragging) {
+        // Attach a mouse move listener to the document.
         abortController = new AbortController();
         document.addEventListener("mousemove", (e) => {
           e.preventDefault();
@@ -220,50 +233,49 @@ export class ColorMapEditor {
       }
     };
 
+    // This listener is responsible for:
+    //  - Starting dragging a control point, if one was pressed on with the left mouse button.
+    //  - Adding a control point if the left mouse button was pressed anywhere else (also starts dragging the newly
+    //    created point).
+    //  - Removing a control point on middle click.
     this.canvas.addEventListener("mousedown", (e) => {
       draggedBefore = false;
-      if (e.button === 0) {
-        // Left click
-        checkDragStart(e);
-      }
 
-      if (isDragging) {
-        return;
-      }
-
-      const x = Math.max(0, Math.min(1, e.offsetX / this.canvas.width));
-      if (e.button === 0) {
-        // Left click
-        const rgb = this.colorRange(x);
-        const stop = { stop: x, rgb };
-        this.colorMap.push(stop);
-        this.colorMap.sort((a, b) => a.stop - b.stop);
-        this.updateColorRange();
-        this.draw();
-        this.sendUpdates();
+      if (e.button === 0) { // Left Mouse Button
+        // Check if a control point was selected with the left mouse button.
         checkDragStart(e);
-      } else if (e.button === 1) {
-        // Middle click
+
+        if (!isDragging) {
+          // If no control point was selected a new one is being created and also immediately dragged.
+          const x = Math.max(0, Math.min(1, e.offsetX / this.canvas.width));
+          const rgb = this.colorRange(x);
+          const stop = { stop: x, rgb };
+          this.colorMap.push(stop);
+          this.colorMap.sort((a, b) => a.stop - b.stop);
+          this.updateColorRange();
+          this.draw();
+          this.sendUpdates();
+          checkDragStart(e);
+        }
+      } else if (e.button === 1) { // Middle Mouse Button
         e.preventDefault();
-        let indexToDelete = -1;
+        // If a control point was pressed on with the MMB it gets removed.
         for (let i = 1; i < this.colorMap.length - 1; i++) {
           const stop = this.colorMap[i];
           const dx = stop.stop * this.canvas.width - e.offsetX;
           const dy = 0.5 * this.canvas.height - e.offsetY;
           if (Math.sqrt(dx * dx + dy * dy) < this.controlPointSize) {
-            indexToDelete = i;
-            break;
+            this.colorMap.splice(i, 1);
+            this.updateColorRange();
+            this.draw();
+            this.sendUpdates();
+            return;
           }
-        }
-        if (indexToDelete !== -1) {
-          this.colorMap.splice(indexToDelete, 1);
-          this.updateColorRange();
-          this.draw();
-          this.sendUpdates();
         }
       }
     });
 
+    // This listener is responsible to stop the dragging action, once the mouse is lifted.
     document.addEventListener("mouseup", () => {
       if (isDragging && abortController) {
         abortController.abort();
@@ -273,7 +285,10 @@ export class ColorMapEditor {
       }
     });
 
+    // This saves the id of the callback from the color picker.
     let colorPickerListener = -1;
+
+    // When clicking a control point the color picker is shown.
     this.canvas.addEventListener("click", (e) => {
       if (draggedBefore) {
         return;
@@ -339,12 +354,15 @@ export class ColorMapEditor {
       }
     });
 
-    this.colorPickerContainer.addEventListener("click", (e) => e.stopPropagation());
-
+    // Hides the color picker, if you click outside it.
     document.addEventListener("click", () => {
       this.colorPickerContainer.style.visibility = "hidden";
     });
 
+    // This prevents the color picker from closing when clicking inside it.
+    this.colorPickerContainer.addEventListener("click", (e) => e.stopPropagation());
+
+    // Ensures that the canvas gets redrawn when its size changes.
     const resizeObserver = new ResizeObserver(() => {
       this.canvas.width = this.container.clientWidth;
       this.canvas.height = this.container.clientHeight;
