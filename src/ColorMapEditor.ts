@@ -217,17 +217,18 @@ export class ColorMapEditor {
         abortController = new AbortController();
         document.addEventListener("mousemove", (e) => {
           e.preventDefault();
-          const offsetX = e.clientX - this.canvas.getBoundingClientRect().x;
-          const x = Math.max(0, Math.min(1, offsetX / this.canvas.width));
 
-          if (dragIndex !== 0 && dragIndex !== this.colorMap.length - 1) {
+          if (dragIndex > 0 && dragIndex < this.colorMap.length - 1) {
+            const offsetX = e.clientX - this.canvas.getBoundingClientRect().x;
+            const leftBound = this.colorMap[dragIndex - 1].stop + Number.EPSILON;
+            const rightBound = this.colorMap[dragIndex + 1].stop - Number.EPSILON;
+            const x = Math.max(leftBound, Math.min(rightBound, offsetX / this.canvas.width));
             this.colorMap[dragIndex].stop = x;
+            this.updateColorRange();
+            this.draw();
+            this.sendUpdates();
           }
 
-          this.colorMap.sort((a, b) => a.stop - b.stop);
-          this.updateColorRange();
-          this.draw();
-          this.sendUpdates();
           draggedBefore = true;
         }, { signal: abortController.signal });
       }

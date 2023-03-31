@@ -4,7 +4,7 @@ import * as d3Color from "d3-color";
 import * as d3Interpolate from "d3-interpolate";
 
 export class TransparencyEditor {
-  private container: HTMLElement;
+  private readonly container: HTMLElement;
   private readonly canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
 
@@ -236,10 +236,11 @@ export class TransparencyEditor {
           } else if (dragIndex === this.transferFunction.length - 1) {
             this.transferFunction[dragIndex].alpha = alpha;
           } else {
-            this.transferFunction[dragIndex].stop = stop;
+            const leftBound = this.transferFunction[dragIndex - 1].stop + Number.EPSILON;
+            const rightBound = this.transferFunction[dragIndex + 1].stop - Number.EPSILON;
+            this.transferFunction[dragIndex].stop = Math.max(leftBound, Math.min(rightBound, stop));
             this.transferFunction[dragIndex].alpha = alpha;
           }
-          this.sortControlPoints();
           this.updateAlphaRange();
           this.sendUpdate();
           this.draw();
