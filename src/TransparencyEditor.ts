@@ -15,7 +15,10 @@ export class TransparencyEditor {
 
   private colorRange: d3Scale.ScaleLinear<string, string>;
 
-  private controlPointSize: number = 7;
+  private controlPointSize: number;
+
+  private showAlphaGrid: boolean;
+  private alphaGridSize: number;
 
   private callbacks: Map<number, (transferFunction: TransferFunction) => void> = new Map();
   private callbackCounter = 0;
@@ -40,12 +43,20 @@ export class TransparencyEditor {
       initialColorMap: [
         { stop: 0, rgb: "black" },
         { stop: 1, rgb: "black" }
-      ]
+      ],
+      controlPointSize: 7,
+      showAlphaGrid: true,
+      alphaGridSize: 8
     };
     const finalOptions = Object.assign(defaultOption, options);
 
     this.transferFunction = finalOptions.initialTransferFunction;
     this.colorMap = finalOptions.initialColorMap;
+
+    this.controlPointSize = finalOptions.controlPointSize;
+
+    this.showAlphaGrid = finalOptions.showAlphaGrid;
+    this.alphaGridSize = finalOptions.alphaGridSize;
 
     this.container.classList.add("tfe-transparency-editor");
 
@@ -160,11 +171,26 @@ export class TransparencyEditor {
     // Clear the drawing area.
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+    if (this.showAlphaGrid) {
+      this.ctx.fillStyle = "#CACACA";
+      for (let y = 0; y < this.canvas.height / this.alphaGridSize; y++) {
+        for (let x = 0; x < this.canvas.width / this.alphaGridSize; x++) {
+          if ((x % 2 == 0 && y % 2 == 0) || (x % 2 == 1 && y % 2 == 1)) {
+            this.ctx.fillRect(x * this.alphaGridSize, y * this.alphaGridSize, this.alphaGridSize, this.alphaGridSize);
+          }
+        }
+      }
+    }
+
     // Draw the color gradient.
     for (let i = 0; i < this.canvas.width; ++i) {
       const alpha = this.getAlpha(i / (this.canvas.width - 1));
       this.ctx.fillStyle = this.getRGBA(i / (this.canvas.width - 1));
       this.ctx.fillRect(i, alpha * this.canvas.height, 1, (1 - alpha) * this.canvas.height);
+
+      if (this.showAlphaGrid) {
+        this.ctx.clearRect(i, 0, 1, alpha * this.canvas.height);
+      }
     }
 
     // Draw the lines between points.
@@ -291,4 +317,9 @@ export class TransparencyEditor {
 export interface TransparencyEditorOptions {
   initialTransferFunction?: Array<AlphaStop>,
   initialColorMap?: Array<ColorStop>
+
+  controlPointSize?: number
+
+  showAlphaGrid?: boolean
+  alphaGridSize?: number
 }
