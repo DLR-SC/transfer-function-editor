@@ -1,6 +1,7 @@
 import { ColorMapEditor } from "./ColorMapEditor";
 import { TransparencyEditor } from "./TransparencyEditor";
-import { AlphaStop, ColorStop, TransferFunction } from "./Types";
+import { AlphaStop, ColorMap, ColorStop, TransferFunction } from "./Types";
+import objectAssignDeep from "object-assign-deep";
 
 export class TransferFunctionEditor {
   private container: HTMLElement;
@@ -24,7 +25,7 @@ export class TransferFunctionEditor {
     }
 
     const defaultOptions: TransferFunctionEditorOptions = {};
-    const finalOptions = Object.assign(defaultOptions, options);
+    const finalOptions = objectAssignDeep(defaultOptions, options);
 
     this.container.classList.add("tfe-transfer-function-editor");
 
@@ -65,19 +66,19 @@ export class TransferFunctionEditor {
   }
 
   public setColorMap(colorMap: Array<ColorStop>) {
-    this.colorMapEditor.setColorMap(colorMap);
+    this.colorMapEditor.setColorStops(colorMap);
   }
 
   public getAlphaStops(): Array<AlphaStop> {
     return this.transparencyEditor.getAlphaStops();
   }
 
-  public getColorMap(): Array<ColorStop> {
+  public getColorMap(): ColorMap {
     return this.colorMapEditor.getColorMap();
   }
 }
 
 export interface TransferFunctionEditorOptions {
   initialTransferFunction?: Array<AlphaStop>;
-  initialColorMap?: Array<ColorStop>;
+  initialColorMap?: ColorMap;
 }

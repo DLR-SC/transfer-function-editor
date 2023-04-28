@@ -5,7 +5,15 @@ import {
   ColorPicker
 } from "../../dist/transfer-function-editor.modern";
 
-const tf = new TransferFunctionEditor("#tf-editor");
+const tf = new TransferFunctionEditor("#tf-editor", {
+  initialColorMap: {
+    colorStops: [
+      {stop: 0, color: "blue"},
+      {stop: 0.5, color: "white"},
+      {stop: 1, color: "red"}
+    ]
+  }
+});
 tf.addListener((tf) => {
   document.querySelector("#tf-output").innerText = JSON.stringify(tf, null, 2);
 });
@@ -16,11 +24,20 @@ tp.addListener((tf) => {
 });
 
 const cm = new ColorMapEditor("#cm", {
-  initialColorMap: [
-    { stop: 0, rgb: "#0f0" },
-    { stop: 0.5, rgb: "#f00" },
-    { stop: 1, rgb: "#000" }
-  ]
+  initialColorMap: {
+    colorStops: [
+      { stop: 0, color: "#0f0" },
+      { stop: 0.5, color: "#f00" },
+      { stop: 0.75, color: "#bb00bb" },
+      { stop: 1, color: "#000" }
+    ],
+    interpolationMethod: "HSL",
+    discrete: false,
+    bins: 9
+  },
+  showStopNumbers: true,
+  binSelectorEditable: true,
+  interpolationMethodsEditable: true
 });
 
 cm.addListener((cm) => {

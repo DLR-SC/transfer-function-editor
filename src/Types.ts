@@ -5,12 +5,12 @@ export interface AlphaStop {
 
 export interface ColorStop {
   stop: number;
-  rgb: string;
+  color: string;
 }
 
 export interface TransferFunction {
   alphaStops: Array<AlphaStop>;
-  colorMap: Array<ColorStop>;
+  colorMap: ColorMap;
 }
 
 /**
@@ -66,3 +66,23 @@ export enum ParaViewColorSpace {
 }
 
 export type ParaViewTransferFunctions = Array<ParaViewTransferFunction>;
+
+export interface ColorMap {
+  colorStops: Array<ColorStop>;
+  interpolationMethod: InterpolationMethod;
+  discrete?: boolean;
+  bins?: number;
+}
+
+export enum InterpolationMethod {
+  RGB = "RGB",
+  HSL = "HSL",
+  HSL_LONG = "HSL_LONG",
+  HSV = "HSV",
+  HSV_LONG = "HSV_LONG",
+  HCL = "HCL",
+  HCL_LONG = "HCL_LONG",
+  LAB = "LAB",
+  CUBEHELIX = "CUBEHELIX",
+  CUBEHELIX_LONG = "CUBEHELIX_LONG",
+}

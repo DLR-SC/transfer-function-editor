@@ -1,7 +1,9 @@
-import { AlphaStop, ColorStop, TransferFunction } from "./Types";
+import { AlphaStop, ColorMap, InterpolationMethod, TransferFunction } from "./Types";
 import * as d3Scale from "d3-scale";
 import * as d3Color from "d3-color";
 import * as d3Interpolate from "d3-interpolate";
+import objectAssignDeep from "object-assign-deep";
+import { getColorFromColorMapAt } from "./convert";
 
 export class TransparencyEditor {
   private readonly container: HTMLElement;
@@ -9,11 +11,9 @@ export class TransparencyEditor {
   private ctx: CanvasRenderingContext2D;
 
   private transferFunction: Array<AlphaStop>;
-  private colorMap: Array<ColorStop>;
+  private colorMap: ColorMap;
 
   private alphaRange: d3Scale.ScaleLinear<number, number>;
-
-  private colorRange: d3Scale.ScaleLinear<string, string>;
 
   private controlPointSize: number;
 
@@ -40,15 +40,18 @@ export class TransparencyEditor {
         { stop: 0.5, alpha: 0.5 },
         { stop: 1, alpha: 0 }
       ],
-      initialColorMap: [
-        { stop: 0, rgb: "black" },
-        { stop: 1, rgb: "black" }
-      ],
+      initialColorMap: {
+        colorStops: [
+          { stop: 0, color: "black" },
+          { stop: 1, color: "black" }
+        ],
+        interpolationMethod: InterpolationMethod.HSL_LONG
+      },
       controlPointSize: 7,
       showAlphaGrid: true,
       alphaGridSize: 8
     };
-    const finalOptions = Object.assign(defaultOption, options);
+    const finalOptions = objectAssignDeep(defaultOption, options);
 
     this.transferFunction = finalOptions.initialTransferFunction;
     this.colorMap = finalOptions.initialColorMap;
@@ -66,7 +69,6 @@ export class TransparencyEditor {
     this.canvas.style.imageRendering = "pixelated";
     this.container.appendChild(this.canvas);
     this.ctx = this.canvas.getContext("2d");
-    this.updateColorRange();
     this.updateAlphaRange();
     this.draw();
     this.addEventListeners();
@@ -88,7 +90,7 @@ export class TransparencyEditor {
   }
 
   public getRGB(stop: number): string {
-    return this.colorRange(stop);
+    return getColorFromColorMapAt(this.colorMap, stop);
   }
 
   public getAlpha(stop: number): number {
@@ -140,23 +142,14 @@ export class TransparencyEditor {
     return this.transferFunction;
   }
 
-  public setColorMap(colorMap: Array<ColorStop>) {
+  public setColorMap(colorMap: ColorMap) {
     this.colorMap = colorMap;
-    this.updateColorRange();
     this.sendUpdate();
     this.draw();
   }
 
   private sendUpdate() {
     this.callbacks.forEach((value) => value({ alphaStops: this.transferFunction, colorMap: this.colorMap }));
-  }
-
-  private updateColorRange() {
-    this.colorRange = d3Scale
-      .scaleLinear<string, number>()
-      .domain(this.colorMap.map((entry) => entry.stop))
-      .range(this.colorMap.map((entry) => entry.rgb))
-      .interpolate(d3Interpolate.interpolateHslLong);
   }
 
   private updateAlphaRange() {
@@ -315,11 +308,11 @@ export class TransparencyEditor {
 }
 
 export interface TransparencyEditorOptions {
-  initialTransferFunction?: Array<AlphaStop>,
-  initialColorMap?: Array<ColorStop>
+  initialTransferFunction?: Array<AlphaStop>;
+  initialColorMap?: ColorMap;
 
-  controlPointSize?: number
+  controlPointSize?: number;
 
-  showAlphaGrid?: boolean
-  alphaGridSize?: number
+  showAlphaGrid?: boolean;
+  alphaGridSize?: number;
 }
