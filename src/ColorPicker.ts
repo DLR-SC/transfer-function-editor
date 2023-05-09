@@ -198,13 +198,12 @@ export class ColorPicker {
   /**
    * Register a callback that gets called, when a new color is picked.
    *
-   * @param callback   The function that gets called whenever the color changes.
-   * @param normalized If true, the callback receives colors in normalized (0.0 - 1.0) form.
+   * @param callback The function that gets called whenever the color changes.
    */
-  public addListener(callback: (newColor: Color) => void, normalized: boolean = false): number {
+  public addListener(callback: ColorCallback): number {
     const id = this.callbackCounter++;
-    this.callbacks.set(id, { callback, normalized });
-    callback(normalized ? this.getColorNormalized() : this.getColor());
+    this.callbacks.set(id, callback);
+    callback(this);
     return id;
   }
 
@@ -338,8 +337,8 @@ export class ColorPicker {
    */
   private sendUpdate() {
     this.previewElement.style.backgroundColor = this.getHEX();
-    this.callbacks.forEach((value) => {
-      value.callback(value.normalized ? this.getColorNormalized() : this.getColor());
+    this.callbacks.forEach((callback) => {
+      callback(this);
     });
   }
 
@@ -929,7 +928,7 @@ interface Color {
   hex: string;
 }
 
-type ColorCallback = { callback: (newColor: Color) => void, normalized: boolean };
+type ColorCallback = (colorPicker: ColorPicker) => void;
 
 // Add a stylesheet to the header, that contains the base layout of the color picker.
 if (document.head.querySelector("#tfe-color-picker-style") === null) {

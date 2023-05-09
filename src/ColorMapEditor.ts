@@ -75,7 +75,7 @@ export class ColorMapEditor {
   private colorPicker: ColorPicker;
 
   /** This gets called, when the color changes to notify users of this library. */
-  private callbacks: Map<number, (colorMap: ColorMap) => void> = new Map();
+  private callbacks: Map<number, (colorMapEditor: ColorMapEditor) => void> = new Map();
   private callbackCounter = 0;
 
   /**
@@ -263,10 +263,10 @@ export class ColorMapEditor {
    *
    * @param callback   The function that gets called whenever the color map changes.
    */
-  public addListener(callback: (colorMap: ColorMap) => void): number {
+  public addListener(callback: (colorMapEditor: ColorMapEditor) => void): number {
     const id = this.callbackCounter++;
     this.callbacks.set(id, callback);
-    callback(this.getColorMap());
+    callback(this);
     return id;
   }
 
@@ -277,7 +277,7 @@ export class ColorMapEditor {
 
   /** This function notifies all listeners to this color map editor. */
   private sendUpdates() {
-    this.callbacks.forEach((value) => value(this.getColorMap()));
+    this.callbacks.forEach((value) => value(this));
   }
 
   /** Draws the gradient and the control points. */
@@ -498,8 +498,8 @@ export class ColorMapEditor {
         this.colorPickerContainer.style.visibility = "visible";
         this.colorPicker.removeListener(colorPickerListener);
         this.colorPicker.setHEX(stop.color);
-        colorPickerListener = this.colorPicker.addListener((newColor) => {
-          stop.color = newColor.hex;
+        colorPickerListener = this.colorPicker.addListener((colorPicker) => {
+          stop.color = colorPicker.getHEX();
           this.draw();
           this.sendUpdates();
         });

@@ -20,7 +20,7 @@ export class TransparencyEditor {
   private showAlphaGrid: boolean;
   private alphaGridSize: number;
 
-  private callbacks: Map<number, (transferFunction: TransferFunction) => void> = new Map();
+  private callbacks: Map<number, (transparencyEditor: TransparencyEditor) => void> = new Map();
   private callbackCounter = 0;
 
   constructor(container: HTMLElement | string, options?: TransparencyEditorOptions) {
@@ -74,10 +74,10 @@ export class TransparencyEditor {
     this.addEventListeners();
   }
 
-  public addListener(callback: (transferFunction: TransferFunction) => void): number {
+  public addListener(callback: (transparencyEditor: TransparencyEditor) => void): number {
     const id = this.callbackCounter++;
     this.callbacks.set(id, callback);
-    callback(this.getTransferFunction());
+    callback(this);
     return id;
   }
 
@@ -149,7 +149,7 @@ export class TransparencyEditor {
   }
 
   private sendUpdate() {
-    this.callbacks.forEach((value) => value({ alphaStops: this.transferFunction, colorMap: this.colorMap }));
+    this.callbacks.forEach((value) => value(this));
   }
 
   private updateAlphaRange() {

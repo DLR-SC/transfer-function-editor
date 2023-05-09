@@ -10,7 +10,7 @@ export class TransferFunctionEditor {
 
   private colorMapEditor: ColorMapEditor;
 
-  private callbacks: Map<number, (transferFunction: TransferFunction) => void> = new Map();
+  private callbacks: Map<number, (transferFunctionEditor: TransferFunctionEditor) => void> = new Map();
   private callbackCounter = 0;
 
   constructor(container: HTMLElement | string, options?: TransferFunctionEditorOptions) {
@@ -41,19 +41,19 @@ export class TransferFunctionEditor {
     this.container.append(colorMapEditorElement);
     this.colorMapEditor = new ColorMapEditor(colorMapEditorElement, finalOptions);
 
-    this.colorMapEditor.addListener((colorMap) => this.transparencyEditor.setColorMap(colorMap));
+    this.colorMapEditor.addListener((colorMapEditor) => this.transparencyEditor.setColorMap(colorMapEditor.getColorMap()));
 
     this.transparencyEditor.setColorMap(this.colorMapEditor.getColorMap());
 
-    this.transparencyEditor.addListener((tf) => {
-      this.callbacks.forEach((value) => value(tf));
+    this.transparencyEditor.addListener(() => {
+      this.callbacks.forEach((value) => value(this));
     });
   }
 
-  public addListener(callback: (transferFunction: TransferFunction) => void): number {
+  public addListener(callback: (transferFunctionEditor: TransferFunctionEditor) => void): number {
     const id = this.callbackCounter++;
     this.callbacks.set(id, callback);
-    callback(this.transparencyEditor.getTransferFunction());
+    callback(this);
     return id;
   }
 
@@ -75,6 +75,10 @@ export class TransferFunctionEditor {
 
   public getColorMap(): ColorMap {
     return this.colorMapEditor.getColorMap();
+  }
+
+  public getTransferFunction(): TransferFunction {
+    return this.transparencyEditor.getTransferFunction();
   }
 }
 

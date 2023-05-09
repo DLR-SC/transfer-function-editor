@@ -15,12 +15,12 @@ const tf = new TransferFunctionEditor("#tf-editor", {
   }
 });
 tf.addListener((tf) => {
-  document.querySelector("#tf-output").innerText = JSON.stringify(tf, null, 2);
+  document.querySelector("#tf-output").innerText = JSON.stringify(tf.getTransferFunction(), null, 2);
 });
 
 const tp = new TransparencyEditor("#tp");
-tp.addListener((tf) => {
-  document.querySelector("#tp-output").innerText = JSON.stringify(tf, null, 2);
+tp.addListener((te) => {
+  document.querySelector("#tp-output").innerText = JSON.stringify(te.getAlphaStops(), null, 2);
 });
 
 const cm = new ColorMapEditor("#cm", {
@@ -41,11 +41,11 @@ const cm = new ColorMapEditor("#cm", {
 });
 
 cm.addListener((cm) => {
-  document.querySelector("#cm-output").innerText = JSON.stringify(cm, null, 2);
+  document.querySelector("#cm-output").innerText = JSON.stringify(cm.getColorMap(), null, 2);
 });
 
 const cp = new ColorPicker("#cp", { initialColor: "cyan" });
 
 cp.addListener((c) => {
-  document.querySelector("#cp-output").innerText = JSON.stringify(c, null, 2);
+  document.querySelector("#cp-output").innerText = JSON.stringify(c.getColor(), null, 2);
 });
