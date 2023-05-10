@@ -81,7 +81,7 @@ export class ColorMapEditor {
   /**
    * Creates a new color map editor inside the given container.
    *
-   * @param container Either an HTMLElement or a query string to an element, in which the color picker will be embedded.
+   * @param container Either an HTMLElement or a query string to an element, in which the editor will be embedded.
    * @param options   Can be used to configure the color map editor. See {@link ColorMapEditorOptions}.
    */
   constructor(container: HTMLElement | string, options?: ColorMapEditorOptions) {
@@ -269,7 +269,7 @@ export class ColorMapEditor {
   /**
    * Register a callback that gets called, when the color map changes.
    *
-   * @param callback   The function that gets called whenever the color map changes.
+   * @param callback The function that gets called whenever the color map changes.
    */
   public addListener(callback: (colorMapEditor: ColorMapEditor) => void): number {
     const id = this.callbackCounter++;
