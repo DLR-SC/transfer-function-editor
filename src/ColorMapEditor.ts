@@ -19,8 +19,8 @@ import * as d3Color from "d3-color";
  *     }
  *   });
  *
- *   cm.addListener((newColorMap) => {
- *     console.log(newColorMap);
+ *   cm.addListener((colorMapEditor) => {
+ *     console.log(colorMapEditor.getColorMap());
  *     // {
  *     //   colorStops: [{stop: 0, color: "#0f0"},{stop: 0.5, color: "#f00"},{stop: 1, color: "#000"}],
  *     //   interpolationMethod: "HSL_LONG"

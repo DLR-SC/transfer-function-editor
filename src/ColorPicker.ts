@@ -10,21 +10,16 @@ import { hsv as d3HSV, HSVColor } from "d3-hsv";
  * ```js
  *   const cp = new ColorPicker("#color-picker-container", { initialColor: "cyan" });
  *
- *   // Default
- *   cp.addListener((newColor) => {
- *     console.log("rgb: ", newColor.rgb); // rgb: { r: 0, g: 255, b: 255 }
- *     console.log("hsv: ", newColor.hsv); // hsv: { r: 180, g: 100, b: 50 }
- *     console.log("hsl: ", newColor.hsl); // hsl: { h: 180, s: 100, l: 100 }
- *     console.log("hex: ", newColor.hex); // hex: "#00ffff"
- *   });
+ *   cp.addListener((colorPicker) => {
+ *     console.log("rgb: ", colorPicker.getRGB()); // rgb: { r: 0, g: 255, b: 255 }
+ *     console.log("hsv: ", colorPicker.getHSV()); // hsv: { r: 180, g: 100, b: 50 }
+ *     console.log("hsl: ", colorPicker.getHSL()); // hsl: { h: 180, s: 100, l: 100 }
  *
- *   // Normalized
- *   cp.addListener((newColor) => {
- *     console.log("rgb: ", newColor.rgb); // rgb: { r: 0.0, g: 1.0, b: 1.0 }
- *     console.log("hsv: ", newColor.hsv); // hsv: { r: 0.5, g: 1.0, b: 0.5 }
- *     console.log("hsl: ", newColor.hsl); // hsl: { h: 0.5, s: 1.0, l: 1.0 }
- *     console.log("hex: ", newColor.hex); // hex: "#00ffff"
- *   }, true);
+ *     console.log("rgb: ", colorPicker.getRGBNormalized()); // rgb: { r: 0.0, g: 1.0, b: 1.0 }
+ *     console.log("hsv: ", colorPicker.getHSVNormalized()); // hsv: { r: 0.5, g: 1.0, b: 0.5 }
+ *     console.log("hsl: ", colorPicker.getHSLNormalized()); // hsl: { h: 0.5, s: 1.0, l: 1.0 }
+ *     console.log("hex: ", colorPicker.getHEX()); // hex: "#00ffff"
+ *   });
  * ```
  */
 export class ColorPicker {
