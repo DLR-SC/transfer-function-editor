@@ -1,8 +1,8 @@
-import { ColorMap, ColorMapBin, ColorStop, InterpolationMethod } from "./Types";
-import { ColorPicker } from "./ColorPicker";
-import objectAssignDeep from "object-assign-deep";
-import { getColorFromColorMapAt, getColorMapBins } from "./convert";
-import * as d3Color from "d3-color";
+import {ColorMap, ColorMapBin, ColorStop, InterpolationMethod} from './Types';
+import {ColorPicker} from './ColorPicker';
+import objectAssignDeep from 'object-assign-deep';
+import {getColorFromColorMapAt, getColorMapBins} from './convert';
+import * as d3Color from 'd3-color';
 
 /**
  * This creates a color map editor component, where the user can create a color gradient using stops and colors.
@@ -86,31 +86,31 @@ export class ColorMapEditor {
   constructor(container: HTMLElement | string, options?: ColorMapEditorOptions) {
     // Figure out which element we want to embed in.
     if (container) {
-      if (typeof container === "string") {
+      if (typeof container === 'string') {
         this.container = document.querySelector(container);
       } else {
         this.container = container;
       }
     } else {
-      throw "No element given!";
+      throw 'No element given!';
     }
 
     // Set all defaults.
     const defaultOptions: ColorMapEditorOptions = {
       initialColorMap: {
         colorStops: [
-          { stop: 0, color: "green" },
-          { stop: 0.5, color: "yellow" },
-          { stop: 1, color: "red" }
+          {stop: 0, color: 'green'},
+          {stop: 0.5, color: 'yellow'},
+          {stop: 1, color: 'red'},
         ],
         interpolationMethod: InterpolationMethod.HSL_LONG,
         discrete: false,
-        bins: 7
+        bins: 7,
       },
       showStopNumbers: false,
       interpolationMethodsEditable: true,
       binSelectorEditable: true,
-      controlPointSize: 7
+      controlPointSize: 7,
     };
 
     // Merge the options with the defaults.
@@ -124,33 +124,33 @@ export class ColorMapEditor {
     this.bins = finalOptions.initialColorMap.bins;
     this.controlPointSize = finalOptions.controlPointSize;
 
-    this.container.classList.add("tfe-color-map-editor");
+    this.container.classList.add('tfe-color-map-editor');
 
     // This contains the canvas and the controls.
-    this.rootElement = document.createElement("div");
-    this.rootElement.classList.add("tfe-color-map-editor-root");
-    this.rootElement.style.display = "flex";
-    this.rootElement.style.flexDirection = "column";
-    this.rootElement.style.gap = "5px";
+    this.rootElement = document.createElement('div');
+    this.rootElement.classList.add('tfe-color-map-editor-root');
+    this.rootElement.style.display = 'flex';
+    this.rootElement.style.flexDirection = 'column';
+    this.rootElement.style.gap = '5px';
     this.container.appendChild(this.rootElement);
 
     // Prepare the canvas and the context.
-    this.canvas = document.createElement("canvas");
+    this.canvas = document.createElement('canvas');
     this.canvas.width = this.container.clientWidth;
     this.canvas.height = this.container.clientHeight;
 
     this.rootElement.appendChild(this.canvas);
-    this.ctx = this.canvas.getContext("2d", { alpha: false });
+    this.ctx = this.canvas.getContext('2d', {alpha: false});
 
     // Prepare the container for the color picker and initialize it.
-    this.colorPickerContainer = document.createElement("div");
-    this.colorPickerContainer.classList.add("tfe-color-map-editor-color-picker-container");
-    this.colorPickerContainer.style.width = "fit-content";
-    this.colorPickerContainer.style.padding = "12px";
-    this.colorPickerContainer.style.backgroundColor = "white";
-    this.colorPickerContainer.style.border = "1px solid black";
-    this.colorPickerContainer.style.visibility = "hidden";
-    this.colorPickerContainer.style.position = "relative";
+    this.colorPickerContainer = document.createElement('div');
+    this.colorPickerContainer.classList.add('tfe-color-map-editor-color-picker-container');
+    this.colorPickerContainer.style.width = 'fit-content';
+    this.colorPickerContainer.style.padding = '12px';
+    this.colorPickerContainer.style.backgroundColor = 'white';
+    this.colorPickerContainer.style.border = '1px solid black';
+    this.colorPickerContainer.style.visibility = 'hidden';
+    this.colorPickerContainer.style.position = 'relative';
     this.container.appendChild(this.colorPickerContainer);
     this.colorPicker = new ColorPicker(this.colorPickerContainer);
 
@@ -255,7 +255,7 @@ export class ColorMapEditor {
       colorStops: this.colorStops,
       interpolationMethod: this.interpolationMethod,
       discrete: this.discrete || undefined,
-      bins: this.discrete ? this.bins : undefined
+      bins: this.discrete ? this.bins : undefined,
     };
   }
 
@@ -293,12 +293,15 @@ export class ColorMapEditor {
   private draw() {
     // Draw the gradient.
     for (let i = 0; i < this.canvas.width; ++i) {
-      this.ctx.fillStyle = getColorFromColorMapAt({
-        colorStops: this.colorStops,
-        interpolationMethod: this.interpolationMethod,
-        discrete: this.discrete,
-        bins: this.bins
-      }, i / (this.canvas.width - 1));
+      this.ctx.fillStyle = getColorFromColorMapAt(
+        {
+          colorStops: this.colorStops,
+          interpolationMethod: this.interpolationMethod,
+          discrete: this.discrete,
+          bins: this.bins,
+        },
+        i / (this.canvas.width - 1)
+      );
 
       this.ctx.fillRect(i, 0, 1, this.canvas.height);
     }
@@ -317,7 +320,7 @@ export class ColorMapEditor {
       const strokes = 10;
       for (let i = 0; i < strokes; i++) {
         this.ctx.beginPath();
-        this.ctx.strokeStyle = i % 2 === 0 ? "white" : "black";
+        this.ctx.strokeStyle = i % 2 === 0 ? 'white' : 'black';
         this.ctx.arc(x, y, this.controlPointSize, (i / strokes) * (2 * Math.PI), ((i + 1) / strokes) * (2 * Math.PI));
         this.ctx.stroke();
       }
@@ -325,15 +328,15 @@ export class ColorMapEditor {
       // Below the control point we draw the number of the stop, if enabled.
       if (this.showStopNumbers) {
         if (i === 0) {
-          this.ctx.textAlign = "left";
+          this.ctx.textAlign = 'left';
         } else if (i === this.colorStops.length - 1) {
-          this.ctx.textAlign = "right";
+          this.ctx.textAlign = 'right';
         } else {
-          this.ctx.textAlign = "center";
+          this.ctx.textAlign = 'center';
         }
 
         const brightness = d3Color.hsl(color).l;
-        this.ctx.fillStyle = brightness < 0.5 ? "white" : "black";
+        this.ctx.fillStyle = brightness < 0.5 ? 'white' : 'black';
         this.ctx.fillText(this.colorStops[i].stop.toPrecision(3), x, this.canvas.height - 1);
       }
     }
@@ -353,12 +356,11 @@ export class ColorMapEditor {
     // The AbortController is for removing the mousemove listener from the document, when the user stops dragging.
     let abortController: AbortController = null;
 
-
     /**
      * This function checks if a control point was selected, sets the dragIndex and isDragging fields and attaches a
      * mouse move listener to the document. This allows for more consistent control.
      */
-    const checkDragStart = (e: { offsetX: number; offsetY: number }) => {
+    const checkDragStart = (e: {offsetX: number; offsetY: number}) => {
       // Figure out which control point was selected.
       dragIndex = -1;
       for (let i = 0; i < this.colorStops.length; i++) {
@@ -374,20 +376,24 @@ export class ColorMapEditor {
       if (isDragging) {
         // Attach a mouse move listener to the document.
         abortController = new AbortController();
-        document.addEventListener("mousemove", (e) => {
-          e.preventDefault();
+        document.addEventListener(
+          'mousemove',
+          (e) => {
+            e.preventDefault();
 
-          if (dragIndex > 0 && dragIndex < this.colorStops.length - 1) {
-            const offsetX = e.clientX - this.canvas.getBoundingClientRect().x;
-            const leftBound = this.colorStops[dragIndex - 1].stop + Number.EPSILON;
-            const rightBound = this.colorStops[dragIndex + 1].stop - Number.EPSILON;
-            this.colorStops[dragIndex].stop = Math.max(leftBound, Math.min(rightBound, offsetX / this.canvas.width));
-            this.draw();
-            this.sendUpdates();
-          }
+            if (dragIndex > 0 && dragIndex < this.colorStops.length - 1) {
+              const offsetX = e.clientX - this.canvas.getBoundingClientRect().x;
+              const leftBound = this.colorStops[dragIndex - 1].stop + Number.EPSILON;
+              const rightBound = this.colorStops[dragIndex + 1].stop - Number.EPSILON;
+              this.colorStops[dragIndex].stop = Math.max(leftBound, Math.min(rightBound, offsetX / this.canvas.width));
+              this.draw();
+              this.sendUpdates();
+            }
 
-          draggedBefore = true;
-        }, { signal: abortController.signal });
+            draggedBefore = true;
+          },
+          {signal: abortController.signal}
+        );
       }
     };
 
@@ -396,30 +402,35 @@ export class ColorMapEditor {
     //  - Adding a control point if the left mouse button was pressed anywhere else (also starts dragging the newly
     //    created point).
     //  - Removing a control point on middle click.
-    this.canvas.addEventListener("mousedown", (e) => {
+    this.canvas.addEventListener('mousedown', (e) => {
       draggedBefore = false;
 
-      if (e.button === 0) { // Left Mouse Button
+      if (e.button === 0) {
+        // Left Mouse Button
         // Check if a control point was selected with the left mouse button.
         checkDragStart(e);
 
         if (!isDragging) {
           // If no control point was selected a new one is being created and also immediately dragged.
           const x = Math.max(0, Math.min(1, e.offsetX / this.canvas.width));
-          const color = getColorFromColorMapAt({
-            colorStops: this.colorStops,
-            interpolationMethod: this.interpolationMethod,
-            discrete: this.discrete,
-            bins: this.bins
-          }, x);
-          const stop = { stop: x, color };
+          const color = getColorFromColorMapAt(
+            {
+              colorStops: this.colorStops,
+              interpolationMethod: this.interpolationMethod,
+              discrete: this.discrete,
+              bins: this.bins,
+            },
+            x
+          );
+          const stop = {stop: x, color};
           this.colorStops.push(stop);
           this.colorStops.sort((a, b) => a.stop - b.stop);
           this.draw();
           this.sendUpdates();
           checkDragStart(e);
         }
-      } else if (e.button === 1) { // Middle Mouse Button
+      } else if (e.button === 1) {
+        // Middle Mouse Button
         e.preventDefault();
         // If a control point was pressed on with the MMB it gets removed.
         for (let i = 1; i < this.colorStops.length - 1; i++) {
@@ -437,7 +448,7 @@ export class ColorMapEditor {
     });
 
     // This listener is responsible to stop the dragging action, once the mouse is lifted.
-    document.addEventListener("mouseup", () => {
+    document.addEventListener('mouseup', () => {
       if (isDragging && abortController) {
         abortController.abort();
         abortController = null;
@@ -450,7 +461,7 @@ export class ColorMapEditor {
     let colorPickerListener = -1;
 
     // When clicking a control point the color picker is shown.
-    this.canvas.addEventListener("click", (e) => {
+    this.canvas.addEventListener('click', (e) => {
       if (draggedBefore) {
         return;
       }
@@ -503,7 +514,7 @@ export class ColorMapEditor {
           this.colorPickerContainer.style.left = `${x}px`;
         }
 
-        this.colorPickerContainer.style.visibility = "visible";
+        this.colorPickerContainer.style.visibility = 'visible';
         this.colorPicker.removeListener(colorPickerListener);
         this.colorPicker.setHEX(stop.color);
         colorPickerListener = this.colorPicker.addListener((colorPicker) => {
@@ -515,12 +526,12 @@ export class ColorMapEditor {
     });
 
     // Hides the color picker, if you click outside it.
-    document.addEventListener("click", () => {
-      this.colorPickerContainer.style.visibility = "hidden";
+    document.addEventListener('click', () => {
+      this.colorPickerContainer.style.visibility = 'hidden';
     });
 
     // This prevents the color picker from closing when clicking inside it.
-    this.colorPickerContainer.addEventListener("click", (e) => e.stopPropagation());
+    this.colorPickerContainer.addEventListener('click', (e) => e.stopPropagation());
 
     // Ensures that the canvas gets redrawn when its size changes.
     const resizeObserver = new ResizeObserver(() => {
@@ -542,35 +553,35 @@ export class ColorMapEditor {
     }
 
     // The root of the inputs. It aligns them horizontally and wraps them if needed.
-    const settingsContainer = document.createElement("div");
-    settingsContainer.classList.add("tfe-color-map-editor-settings");
-    settingsContainer.style.display = "flex";
-    settingsContainer.style.flexDirection = "row";
-    settingsContainer.style.justifyContent = "space-between";
-    settingsContainer.style.alignItems = "center";
-    settingsContainer.style.flexWrap = "wrap";
+    const settingsContainer = document.createElement('div');
+    settingsContainer.classList.add('tfe-color-map-editor-settings');
+    settingsContainer.style.display = 'flex';
+    settingsContainer.style.flexDirection = 'row';
+    settingsContainer.style.justifyContent = 'space-between';
+    settingsContainer.style.alignItems = 'center';
+    settingsContainer.style.flexWrap = 'wrap';
     this.rootElement.appendChild(settingsContainer);
 
     if (finalOptions.interpolationMethodsEditable) {
-      const label = document.createElement("label");
-      label.classList.add("tfe-color-map-editor-interpolation-method-label");
-      label.innerText = "Interpolation: ";
+      const label = document.createElement('label');
+      label.classList.add('tfe-color-map-editor-interpolation-method-label');
+      label.innerText = 'Interpolation: ';
 
-      this.interpolationMethodElement = document.createElement("select");
-      this.interpolationMethodElement.classList.add("tfe-color-map-editor-interpolation-method-select");
+      this.interpolationMethodElement = document.createElement('select');
+      this.interpolationMethodElement.classList.add('tfe-color-map-editor-interpolation-method-select');
 
       // Generate options for all interpolation methods.
       for (let method of Object.keys(InterpolationMethod)) {
-        const option = document.createElement("option");
-        option.classList.add("tfe-color-map-editor-interpolation-method-option");
+        const option = document.createElement('option');
+        option.classList.add('tfe-color-map-editor-interpolation-method-option');
         option.value = method;
-        option.innerText = method.replace("_", " ");
+        option.innerText = method.replace('_', ' ');
         this.interpolationMethodElement.options.add(option);
       }
 
       this.interpolationMethodElement.value = this.interpolationMethod;
 
-      this.interpolationMethodElement.addEventListener("change", () => {
+      this.interpolationMethodElement.addEventListener('change', () => {
         this.interpolationMethod = InterpolationMethod[this.interpolationMethodElement.value];
         this.draw();
         this.sendUpdates();
@@ -581,40 +592,40 @@ export class ColorMapEditor {
     }
 
     if (finalOptions.binSelectorEditable) {
-      const binSelectorRoot = document.createElement("div");
-      binSelectorRoot.classList.add("tfe-color-map-editor-bin-selector");
-      binSelectorRoot.style.display = "flex";
-      binSelectorRoot.style.flexDirection = "row";
-      binSelectorRoot.style.gap = "10px";
-      binSelectorRoot.style.alignItems = "center";
+      const binSelectorRoot = document.createElement('div');
+      binSelectorRoot.classList.add('tfe-color-map-editor-bin-selector');
+      binSelectorRoot.style.display = 'flex';
+      binSelectorRoot.style.flexDirection = 'row';
+      binSelectorRoot.style.gap = '10px';
+      binSelectorRoot.style.alignItems = 'center';
       settingsContainer.appendChild(binSelectorRoot);
 
-      const checkboxLabel = document.createElement("label");
-      checkboxLabel.classList.add("tfe-color-map-editor-bin-selector-checkbox-label");
-      checkboxLabel.innerText = "discrete: ";
+      const checkboxLabel = document.createElement('label');
+      checkboxLabel.classList.add('tfe-color-map-editor-bin-selector-checkbox-label');
+      checkboxLabel.innerText = 'discrete: ';
       binSelectorRoot.appendChild(checkboxLabel);
 
-      this.discreteElement = document.createElement("input");
-      this.discreteElement.classList.add("tfe-color-map-editor-bin-selector-checkbox");
-      this.discreteElement.type = "checkbox";
+      this.discreteElement = document.createElement('input');
+      this.discreteElement.classList.add('tfe-color-map-editor-bin-selector-checkbox');
+      this.discreteElement.type = 'checkbox';
       this.discreteElement.checked = this.discrete;
       checkboxLabel.appendChild(this.discreteElement);
 
-      const binsLabel = document.createElement("label");
-      binsLabel.classList.add("tfe-color-map-editor-bin-selector-number-label");
-      binsLabel.innerText = "bins: ";
+      const binsLabel = document.createElement('label');
+      binsLabel.classList.add('tfe-color-map-editor-bin-selector-number-label');
+      binsLabel.innerText = 'bins: ';
       binSelectorRoot.appendChild(binsLabel);
 
-      this.binsElement = document.createElement("input");
-      this.binsElement.classList.add("tfe-color-map-editor-bin-selector-number-input");
-      this.binsElement.style.width = "50px";
+      this.binsElement = document.createElement('input');
+      this.binsElement.classList.add('tfe-color-map-editor-bin-selector-number-input');
+      this.binsElement.style.width = '50px';
       this.binsElement.disabled = !this.discrete;
-      this.binsElement.type = "number";
-      this.binsElement.min = "0";
-      this.binsElement.step = "1";
+      this.binsElement.type = 'number';
+      this.binsElement.min = '0';
+      this.binsElement.step = '1';
       this.binsElement.valueAsNumber = this.bins;
 
-      this.discreteElement.addEventListener("change", () => {
+      this.discreteElement.addEventListener('change', () => {
         this.discrete = this.discreteElement.checked;
         this.binsElement.disabled = !this.discrete;
 
@@ -622,7 +633,7 @@ export class ColorMapEditor {
         this.sendUpdates();
       });
 
-      this.binsElement.addEventListener("change", () => {
+      this.binsElement.addEventListener('change', () => {
         this.bins = this.binsElement.valueAsNumber;
 
         this.draw();
@@ -630,13 +641,15 @@ export class ColorMapEditor {
       });
 
       // Add scroll wheel support to the number input.
-      this.binsElement.addEventListener("wheel", (ev: WheelEvent) => {
+      this.binsElement.addEventListener('wheel', (ev: WheelEvent) => {
         ev.preventDefault();
 
         let value = this.binsElement.valueAsNumber;
-        if (ev.deltaY > 0) {        // Decrement
+        if (ev.deltaY > 0) {
+          // Decrement
           value = Math.max(value - 1, 0);
-        } else if (ev.deltaY < 0) { // Increment
+        } else if (ev.deltaY < 0) {
+          // Increment
           value = Math.max(value + 1, 0);
         }
 
@@ -659,16 +672,15 @@ export class ColorMapEditor {
         this.sendUpdates();
       };
 
-      this.binsElement.addEventListener("focusout", validateBins);
-      this.binsElement.addEventListener("keypress", (ev: KeyboardEvent) => {
-        if (ev.key === "Enter") {
+      this.binsElement.addEventListener('focusout', validateBins);
+      this.binsElement.addEventListener('keypress', (ev: KeyboardEvent) => {
+        if (ev.key === 'Enter') {
           validateBins(ev);
         }
       });
 
       binsLabel.appendChild(this.binsElement);
     }
-
   }
 }
 
@@ -676,36 +688,38 @@ export class ColorMapEditor {
  * The config options for the {@link ColorMapEditor} component.
  */
 export interface ColorMapEditorOptions {
-  initialColorMap?: {
-    /**
-     * The initial color map.
-     * Default:
-     * [
-     *   { stop: 0, color: "green" },
-     *   { stop: 0.5, color: "yellow" },
-     *   { stop: 1, color: "red" }
-     * ]
-     */
-    colorStops?: Array<ColorStop>;
+  initialColorMap?:
+    | {
+        /**
+         * The initial color map.
+         * Default:
+         * [
+         *   { stop: 0, color: "green" },
+         *   { stop: 0.5, color: "yellow" },
+         *   { stop: 1, color: "red" }
+         * ]
+         */
+        colorStops?: Array<ColorStop>;
 
-    /**
-     * The method of interpolation.
-     * Default: "HSL_LONG"
-     */
-    interpolationMethod?: InterpolationMethod;
+        /**
+         * The method of interpolation.
+         * Default: "HSL_LONG"
+         */
+        interpolationMethod?: InterpolationMethod;
 
-    /**
-     * If the color map is discrete or continuous.
-     * Default: false
-     */
-    discrete?: boolean;
+        /**
+         * If the color map is discrete or continuous.
+         * Default: false
+         */
+        discrete?: boolean;
 
-    /**
-     * The number of bins in case the color map is continuous.
-     * Default: 7
-     */
-    bins?: number;
-  } | ColorMap;
+        /**
+         * The number of bins in case the color map is continuous.
+         * Default: 7
+         */
+        bins?: number;
+      }
+    | ColorMap;
 
   /**
    * If the value of a stop is rendered below the control point.

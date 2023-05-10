@@ -1,5 +1,5 @@
-import { hsl as d3HSL } from "d3-color";
-import { hsv as d3HSV, HSVColor } from "d3-hsv";
+import {hsl as d3HSL} from 'd3-color';
+import {hsv as d3HSV, HSVColor} from 'd3-hsv';
 
 /**
  * This creates a color picker component, that will be embedded in the given container. The color can be chosen with a
@@ -86,18 +86,18 @@ export class ColorPicker {
   constructor(container: HTMLElement | string, options?: ColorPickerOptions) {
     // Figure out which element we want to embed in.
     if (container) {
-      if (typeof container === "string") {
+      if (typeof container === 'string') {
         this.container = document.querySelector(container);
       } else {
         this.container = container;
       }
     } else {
-      throw "No element given!";
+      throw 'No element given!';
     }
 
     // Set all defaults.
     const defaultOptions: ColorPickerOptions = {
-      initialColor: "#FFF"
+      initialColor: '#FFF',
     };
 
     // Merge the options with the defaults.
@@ -117,7 +117,7 @@ export class ColorPicker {
     this.backUpSaturation = this.hsv.s;
 
     // Fill the given container with all the HTML and CSS that we need.
-    this.container.classList.add("tfe-color-picker");
+    this.container.classList.add('tfe-color-picker');
     this.container.innerHTML = `
       <div class="tfe-color-picker-root">
         <div class="tfe-color-picker-sl-picker" style="width: ${this.CANVAS_SIZE}px; height: ${this.CANVAS_SIZE}px">
@@ -133,25 +133,37 @@ export class ColorPicker {
           <div></div>
       
           <label for="h">h:</label>
-          <input class="tfe-color-picker-h-input" name="h" type="number" min="0" max="360" step="1" value="${this.hsv.h.toFixed(0)}">
+          <input class="tfe-color-picker-h-input" name="h" type="number" min="0" max="360" step="1" value="${this.hsv.h.toFixed(
+            0
+          )}">
       
           <label for="s">s:</label>
-          <input class="tfe-color-picker-s-input" name="s" type="number" min="0" max="100" step="1" value="${(this.hsv.s * 100).toFixed(0)}">
+          <input class="tfe-color-picker-s-input" name="s" type="number" min="0" max="100" step="1" value="${(
+            this.hsv.s * 100
+          ).toFixed(0)}">
       
           <label for="v">v:</label>
-          <input class="tfe-color-picker-v-input" name="v" type="number" min="0" max="100" step="1" value="${(this.hsv.v * 100).toFixed(0)}">
+          <input class="tfe-color-picker-v-input" name="v" type="number" min="0" max="100" step="1" value="${(
+            this.hsv.v * 100
+          ).toFixed(0)}">
       
           <div></div>
           <div></div>
       
           <label for="r">r:</label>
-          <input class="tfe-color-picker-r-input" name="r" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().r.toFixed(0)}">
+          <input class="tfe-color-picker-r-input" name="r" type="number" min="0" max="255" step="1" value="${this.hsv
+            .rgb()
+            .r.toFixed(0)}">
       
           <label for="g">g:</label>
-          <input class="tfe-color-picker-g-input" name="g" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().g.toFixed(0)}">
+          <input class="tfe-color-picker-g-input" name="g" type="number" min="0" max="255" step="1" value="${this.hsv
+            .rgb()
+            .g.toFixed(0)}">
       
           <label for="b">b:</label>
-          <input class="tfe-color-picker-b-input" name="b" type="number" min="0" max="255" step="1" value="${this.hsv.rgb().b.toFixed(0)}">
+          <input class="tfe-color-picker-b-input" name="b" type="number" min="0" max="255" step="1" value="${this.hsv
+            .rgb()
+            .b.toFixed(0)}">
       
           <div></div>
           <div></div>
@@ -163,31 +175,31 @@ export class ColorPicker {
     `;
 
     // Prepare the canvas and context for the saturation and value picker.
-    this.svCanvas = this.container.querySelector<HTMLCanvasElement>(".tfe-color-picker-sl-picker-canvas");
-    this.svContext = this.svCanvas.getContext("2d", { alpha: false });
+    this.svCanvas = this.container.querySelector<HTMLCanvasElement>('.tfe-color-picker-sl-picker-canvas');
+    this.svContext = this.svCanvas.getContext('2d', {alpha: false});
     this.drawSVPicker();
     this.addSVEventListener();
 
     // Prepare the canvas and context for the hue picker.
-    this.hCanvas = this.container.querySelector<HTMLCanvasElement>(".tfe-color-picker-h-picker-canvas");
-    this.hContext = this.hCanvas.getContext("2d", { alpha: false });
+    this.hCanvas = this.container.querySelector<HTMLCanvasElement>('.tfe-color-picker-h-picker-canvas');
+    this.hContext = this.hCanvas.getContext('2d', {alpha: false});
     this.drawHPicker();
     this.addHEventListener();
 
     // Initialize all text input fields.
     this.inputFields = {
-      h: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-h-input"),
-      s: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-s-input"),
-      v: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-v-input"),
-      r: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-r-input"),
-      g: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-g-input"),
-      b: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-b-input"),
-      hex: this.container.querySelector<HTMLInputElement>(".tfe-color-picker-hex-input")
+      h: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-h-input'),
+      s: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-s-input'),
+      v: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-v-input'),
+      r: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-r-input'),
+      g: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-g-input'),
+      b: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-b-input'),
+      hex: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-hex-input'),
     };
     this.addInputEventListeners();
 
     // Get the preview element.
-    this.previewElement = this.container.querySelector<HTMLDivElement>(".tfe-color-preview");
+    this.previewElement = this.container.querySelector<HTMLDivElement>('.tfe-color-preview');
   }
 
   /**
@@ -271,35 +283,35 @@ export class ColorPicker {
   /** Returns the currently selected color on RGB format with values between 0 - 255. */
   public getRGB(): RGB {
     const rgb = this.hsv.rgb();
-    return { r: rgb.r, g: rgb.g, b: rgb.b };
+    return {r: rgb.r, g: rgb.g, b: rgb.b};
   }
 
   /** Returns the currently selected color on RGB format with values between 0.0 - 1.0. */
   public getRGBNormalized(): RGB {
     const rgb = this.hsv.rgb();
-    return { r: rgb.r / 255, g: rgb.g / 255, b: rgb.b / 255 };
+    return {r: rgb.r / 255, g: rgb.g / 255, b: rgb.b / 255};
   }
 
   /** Returns the currently selected color on HSL format with values between 0 - 360 for h and 0 - 100 for s and l. */
   public getHSL(): HSL {
     const hsl = d3HSL(this.hsv.formatHsl());
-    return { h: hsl.h, s: hsl.s * 100, l: hsl.l * 100 };
+    return {h: hsl.h, s: hsl.s * 100, l: hsl.l * 100};
   }
 
   /** Returns the currently selected color on HSL format with values between 0.0 - 1.0. */
   public getHSLNormalized(): HSL {
     const hsl = d3HSL(this.hsv.formatHsl());
-    return { h: hsl.h / 360, s: hsl.s, l: hsl.l };
+    return {h: hsl.h / 360, s: hsl.s, l: hsl.l};
   }
 
   /** Returns the currently selected color on HSV format with values between 0 - 360 for h and 0 - 100 for s and v. */
   public getHSV(): HSV {
-    return { h: this.hsv.h, s: this.hsv.s * 100, v: this.hsv.v * 100 };
+    return {h: this.hsv.h, s: this.hsv.s * 100, v: this.hsv.v * 100};
   }
 
   /** Returns the currently selected color on HSV format with values between 0.0 - 1.0. */
   public getHSVNormalized(): HSV {
-    return { h: this.hsv.h / 360, s: this.hsv.s, v: this.hsv.v };
+    return {h: this.hsv.h / 360, s: this.hsv.s, v: this.hsv.v};
   }
 
   /**
@@ -311,7 +323,7 @@ export class ColorPicker {
     const hsl = this.getHSL();
     const hsv = this.getHSV();
     const hex = this.getHEX();
-    return { rgb, hsl, hsv, hex };
+    return {rgb, hsl, hsv, hex};
   }
 
   /**
@@ -323,7 +335,7 @@ export class ColorPicker {
     const hsl = this.getHSLNormalized();
     const hsv = this.getHSVNormalized();
     const hex = this.getHEX();
-    return { rgb, hsl, hsv, hex };
+    return {rgb, hsl, hsv, hex};
   }
 
   /**
@@ -367,7 +379,7 @@ export class ColorPicker {
     const strokes = 10;
     for (let i = 0; i < strokes; i++) {
       this.svContext.beginPath();
-      this.svContext.strokeStyle = i % 2 === 0 ? "white" : "black";
+      this.svContext.strokeStyle = i % 2 === 0 ? 'white' : 'black';
       this.svContext.arc(
         x,
         y,
@@ -383,23 +395,23 @@ export class ColorPicker {
   private drawHPicker() {
     // Draw the hue gradient.
     const gradient = this.hContext.createLinearGradient(0, 0, 0, this.hCanvas.height);
-    gradient.addColorStop(0 / 6, "#ff0000");
-    gradient.addColorStop(1 / 6, "#ff00ff");
-    gradient.addColorStop(2 / 6, "#0000ff");
-    gradient.addColorStop(3 / 6, "#00ffff");
-    gradient.addColorStop(4 / 6, "#00ff00");
-    gradient.addColorStop(5 / 6, "#ffff00");
-    gradient.addColorStop(6 / 6, "#ff0000");
+    gradient.addColorStop(0 / 6, '#ff0000');
+    gradient.addColorStop(1 / 6, '#ff00ff');
+    gradient.addColorStop(2 / 6, '#0000ff');
+    gradient.addColorStop(3 / 6, '#00ffff');
+    gradient.addColorStop(4 / 6, '#00ff00');
+    gradient.addColorStop(5 / 6, '#ffff00');
+    gradient.addColorStop(6 / 6, '#ff0000');
     this.hContext.fillStyle = gradient;
     this.hContext.fillRect(0, 0, this.hCanvas.width, this.hCanvas.height);
 
     // Draw the control point. To ensure visibility everywhere it is an alternating circle in white and black.
     const x = this.hCanvas.width / 2;
-    const y = (1 - (this.hsv.h / 360)) * this.hCanvas.height;
+    const y = (1 - this.hsv.h / 360) * this.hCanvas.height;
     const strokes = 10;
     for (let i = 0; i < strokes; i++) {
       this.hContext.beginPath();
-      this.hContext.strokeStyle = i % 2 === 0 ? "white" : "black";
+      this.hContext.strokeStyle = i % 2 === 0 ? 'white' : 'black';
       this.hContext.arc(
         x,
         y,
@@ -435,13 +447,20 @@ export class ColorPicker {
 
     // When the left mouse button is pressed we attach a mouse move listener to the document to track the mouse movement
     // even outside the canvas.
-    this.svCanvas.addEventListener("mousedown", (e) => {
+    this.svCanvas.addEventListener('mousedown', (e) => {
       if (e.button === 0) {
         abortController = new AbortController();
-        document.addEventListener("mousemove", (e) => {
-          e.preventDefault();
-          updateSV(e.clientX - this.svCanvas.getBoundingClientRect().x, e.clientY - this.svCanvas.getBoundingClientRect().y);
-        }, { signal: abortController.signal });
+        document.addEventListener(
+          'mousemove',
+          (e) => {
+            e.preventDefault();
+            updateSV(
+              e.clientX - this.svCanvas.getBoundingClientRect().x,
+              e.clientY - this.svCanvas.getBoundingClientRect().y
+            );
+          },
+          {signal: abortController.signal}
+        );
 
         isDragging = true;
         updateSV(e.offsetX, e.offsetY);
@@ -449,7 +468,7 @@ export class ColorPicker {
     });
 
     // Stop the drag tracking and remove the move listener from the document.
-    document.addEventListener("mouseup", () => {
+    document.addEventListener('mouseup', () => {
       if (isDragging && abortController) {
         abortController.abort();
         abortController = null;
@@ -466,7 +485,7 @@ export class ColorPicker {
     // Gets called when a new value was selected with the mouse.
     const updateH = (y) => {
       // Calculate the new value from the mouse position.
-      this.hsv.h = clamp(Math.round((1 - (y / this.CANVAS_SIZE)) * 360), 0, 360);
+      this.hsv.h = clamp(Math.round((1 - y / this.CANVAS_SIZE) * 360), 0, 360);
       this.backUpHue = this.hsv.h;
 
       // Send an update to the user.
@@ -481,20 +500,23 @@ export class ColorPicker {
 
     // When the left mouse button is pressed we attach a mouse move listener to the document to track the mouse movement
     // even outside the canvas.
-    this.hCanvas.addEventListener("mousedown", (e) => {
+    this.hCanvas.addEventListener('mousedown', (e) => {
       abortController = new AbortController();
-      document.addEventListener("mousemove", (e) => {
-        e.preventDefault();
-        updateH(e.clientY - this.svCanvas.getBoundingClientRect().y);
-      }, { signal: abortController.signal });
-
+      document.addEventListener(
+        'mousemove',
+        (e) => {
+          e.preventDefault();
+          updateH(e.clientY - this.svCanvas.getBoundingClientRect().y);
+        },
+        {signal: abortController.signal}
+      );
 
       isDragging = true;
       updateH(e.offsetY);
     });
 
     // Stop the drag tracking and remove the move listener from the document.
-    document.addEventListener("mouseup", () => {
+    document.addEventListener('mouseup', () => {
       if (isDragging && abortController) {
         abortController.abort();
         abortController = null;
@@ -553,18 +575,20 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.h.addEventListener("input", (ev: InputEvent) => {
+    this.inputFields.h.addEventListener('input', (ev: InputEvent) => {
       const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 360);
       onHueUpdate(value);
     });
 
-    this.inputFields.h.addEventListener("wheel", (ev: WheelEvent) => {
+    this.inputFields.h.addEventListener('wheel', (ev: WheelEvent) => {
       ev.preventDefault();
 
       let value = Math.round(this.hsv.h);
-      if (ev.deltaY > 0) {        // Decrement
+      if (ev.deltaY > 0) {
+        // Decrement
         value = clamp(value - 1, 0, 360);
-      } else if (ev.deltaY < 0) { // Increment
+      } else if (ev.deltaY < 0) {
+        // Increment
         value = clamp(value + 1, 0, 360);
       }
 
@@ -578,13 +602,12 @@ export class ColorPicker {
       onHueUpdate(value);
     };
 
-    this.inputFields.h.addEventListener("focusout", validateHField);
-    this.inputFields.h.addEventListener("keypress", (ev: KeyboardEvent) => {
-      if (ev.key === "Enter") {
+    this.inputFields.h.addEventListener('focusout', validateHField);
+    this.inputFields.h.addEventListener('keypress', (ev: KeyboardEvent) => {
+      if (ev.key === 'Enter') {
         validateHField(ev);
       }
     });
-
 
     // Setup saturation listeners --------------------------------------------------------------------------------------
 
@@ -596,18 +619,20 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.s.addEventListener("input", (ev: InputEvent) => {
+    this.inputFields.s.addEventListener('input', (ev: InputEvent) => {
       const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 100);
       onSaturationUpdate(value);
     });
 
-    this.inputFields.s.addEventListener("wheel", (ev: WheelEvent) => {
+    this.inputFields.s.addEventListener('wheel', (ev: WheelEvent) => {
       ev.preventDefault();
 
       let value = Math.round(this.hsv.s * 100);
-      if (ev.deltaY > 0) {        // Decrement
+      if (ev.deltaY > 0) {
+        // Decrement
         value = clamp(value - 1, 0, 100);
-      } else if (ev.deltaY < 0) { // Increment
+      } else if (ev.deltaY < 0) {
+        // Increment
         value = clamp(value + 1, 0, 100);
       }
 
@@ -621,9 +646,9 @@ export class ColorPicker {
       onSaturationUpdate(value);
     };
 
-    this.inputFields.s.addEventListener("focusout", validateSField);
-    this.inputFields.s.addEventListener("keypress", (ev: KeyboardEvent) => {
-      if (ev.key === "Enter") {
+    this.inputFields.s.addEventListener('focusout', validateSField);
+    this.inputFields.s.addEventListener('keypress', (ev: KeyboardEvent) => {
+      if (ev.key === 'Enter') {
         validateSField(ev);
       }
     });
@@ -637,18 +662,20 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.v.addEventListener("input", (ev: InputEvent) => {
+    this.inputFields.v.addEventListener('input', (ev: InputEvent) => {
       const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 100);
       onValueUpdate(value);
     });
 
-    this.inputFields.v.addEventListener("wheel", (ev: WheelEvent) => {
+    this.inputFields.v.addEventListener('wheel', (ev: WheelEvent) => {
       ev.preventDefault();
 
       let value = Math.round(this.hsv.v * 100);
-      if (ev.deltaY > 0) {        // Decrement
+      if (ev.deltaY > 0) {
+        // Decrement
         value = clamp(value - 1, 0, 100);
-      } else if (ev.deltaY < 0) { // Increment
+      } else if (ev.deltaY < 0) {
+        // Increment
         value = clamp(value + 1, 0, 100);
       }
 
@@ -662,9 +689,9 @@ export class ColorPicker {
       onValueUpdate(value);
     };
 
-    this.inputFields.v.addEventListener("focusout", validateVField);
-    this.inputFields.v.addEventListener("keypress", (ev: KeyboardEvent) => {
-      if (ev.key === "Enter") {
+    this.inputFields.v.addEventListener('focusout', validateVField);
+    this.inputFields.v.addEventListener('keypress', (ev: KeyboardEvent) => {
+      if (ev.key === 'Enter') {
         validateVField(ev);
       }
     });
@@ -690,19 +717,21 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.r.addEventListener("input", (ev: InputEvent) => {
+    this.inputFields.r.addEventListener('input', (ev: InputEvent) => {
       const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
       onRedUpdate(value);
     });
 
-    this.inputFields.r.addEventListener("wheel", (ev: WheelEvent) => {
+    this.inputFields.r.addEventListener('wheel', (ev: WheelEvent) => {
       ev.preventDefault();
 
       const oldRGB = this.hsv.rgb();
       let value = oldRGB.r;
-      if (ev.deltaY > 0) {        // Decrement
+      if (ev.deltaY > 0) {
+        // Decrement
         value = clamp(value - 1, 0, 255);
-      } else if (ev.deltaY < 0) { // Increment
+      } else if (ev.deltaY < 0) {
+        // Increment
         value = clamp(value + 1, 0, 255);
       }
 
@@ -716,9 +745,9 @@ export class ColorPicker {
       onRedUpdate(value);
     };
 
-    this.inputFields.r.addEventListener("focusout", validateRField);
-    this.inputFields.r.addEventListener("keypress", (ev: KeyboardEvent) => {
-      if (ev.key === "Enter") {
+    this.inputFields.r.addEventListener('focusout', validateRField);
+    this.inputFields.r.addEventListener('keypress', (ev: KeyboardEvent) => {
+      if (ev.key === 'Enter') {
         validateRField(ev);
       }
     });
@@ -732,19 +761,21 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.g.addEventListener("input", (ev: InputEvent) => {
+    this.inputFields.g.addEventListener('input', (ev: InputEvent) => {
       const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
       onGreenUpdate(value);
     });
 
-    this.inputFields.g.addEventListener("wheel", (ev: WheelEvent) => {
+    this.inputFields.g.addEventListener('wheel', (ev: WheelEvent) => {
       ev.preventDefault();
 
       const oldRGB = this.hsv.rgb();
       let value = oldRGB.g;
-      if (ev.deltaY > 0) {        // Decrement
+      if (ev.deltaY > 0) {
+        // Decrement
         value = clamp(value - 1, 0, 255);
-      } else if (ev.deltaY < 0) { // Increment
+      } else if (ev.deltaY < 0) {
+        // Increment
         value = clamp(value + 1, 0, 255);
       }
 
@@ -758,9 +789,9 @@ export class ColorPicker {
       onGreenUpdate(value);
     };
 
-    this.inputFields.g.addEventListener("focusout", validateGField);
-    this.inputFields.g.addEventListener("keypress", (ev: KeyboardEvent) => {
-      if (ev.key === "Enter") {
+    this.inputFields.g.addEventListener('focusout', validateGField);
+    this.inputFields.g.addEventListener('keypress', (ev: KeyboardEvent) => {
+      if (ev.key === 'Enter') {
         validateGField(ev);
       }
     });
@@ -774,19 +805,21 @@ export class ColorPicker {
       }
     };
 
-    this.inputFields.b.addEventListener("input", (ev: InputEvent) => {
+    this.inputFields.b.addEventListener('input', (ev: InputEvent) => {
       const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
       onBlueUpdate(value);
     });
 
-    this.inputFields.b.addEventListener("wheel", (ev: WheelEvent) => {
+    this.inputFields.b.addEventListener('wheel', (ev: WheelEvent) => {
       ev.preventDefault();
 
       const oldRGB = this.hsv.rgb();
       let value = oldRGB.b;
-      if (ev.deltaY > 0) {        // Decrement
+      if (ev.deltaY > 0) {
+        // Decrement
         value = clamp(value - 1, 0, 255);
-      } else if (ev.deltaY < 0) { // Increment
+      } else if (ev.deltaY < 0) {
+        // Increment
         value = clamp(value + 1, 0, 255);
       }
 
@@ -800,9 +833,9 @@ export class ColorPicker {
       onBlueUpdate(value);
     };
 
-    this.inputFields.b.addEventListener("focusout", validateBField);
-    this.inputFields.b.addEventListener("keypress", (ev: KeyboardEvent) => {
-      if (ev.key === "Enter") {
+    this.inputFields.b.addEventListener('focusout', validateBField);
+    this.inputFields.b.addEventListener('keypress', (ev: KeyboardEvent) => {
+      if (ev.key === 'Enter') {
         validateBField(ev);
       }
     });
@@ -810,7 +843,7 @@ export class ColorPicker {
 
   /** Sets up all listeners for the HEX input field. */
   private setupHEXListeners() {
-    this.inputFields.hex.addEventListener("input", (ev: InputEvent) => {
+    this.inputFields.hex.addEventListener('input', (ev: InputEvent) => {
       const element = ev.currentTarget as HTMLInputElement;
       const value = element.value;
       if (value.match(/#([0-7a-fA-F]{3}$|[0-7a-fA-F]{6}$)/)) {
@@ -820,18 +853,18 @@ export class ColorPicker {
         this.drawAll();
         this.updateRGBInputFields();
         this.updateHSVInputFields();
-        element.classList.remove("tfe-color-picker-input-hex-invalid");
+        element.classList.remove('tfe-color-picker-input-hex-invalid');
       } else {
-        element.classList.add("tfe-color-picker-input-hex-invalid");
+        element.classList.add('tfe-color-picker-input-hex-invalid');
       }
     });
 
-    this.inputFields.hex.addEventListener("focusout", (ev: InputEvent) => {
+    this.inputFields.hex.addEventListener('focusout', (ev: InputEvent) => {
       const element = ev.currentTarget as HTMLInputElement;
       const value = element.value;
       if (!value.match(/#([0-7a-fA-F]{3}$|[0-7a-fA-F]{6}$)/)) {
         element.value = this.getHEX();
-        element.classList.remove("tfe-color-picker-input-hex-invalid");
+        element.classList.remove('tfe-color-picker-input-hex-invalid');
       }
     });
   }
@@ -926,8 +959,10 @@ interface Color {
 type ColorCallback = (colorPicker: ColorPicker) => void;
 
 // Add a stylesheet to the header, that contains the base layout of the color picker.
-if (document.head.querySelector("#tfe-color-picker-style") === null) {
-  document.head.insertAdjacentHTML("beforeend", `
+if (document.head.querySelector('#tfe-color-picker-style') === null) {
+  document.head.insertAdjacentHTML(
+    'beforeend',
+    `
     <style id="tfe-color-picker-style">
       .tfe-color-picker-root {
         display: flex;

@@ -1,7 +1,7 @@
-import { ColorMapEditor } from "./ColorMapEditor";
-import { TransparencyEditor } from "./TransparencyEditor";
-import { AlphaStop, ColorMap, ColorMapBin, ColorStop, TransferFunction } from "./Types";
-import objectAssignDeep from "object-assign-deep";
+import {ColorMapEditor} from './ColorMapEditor';
+import {TransparencyEditor} from './TransparencyEditor';
+import {AlphaStop, ColorMap, ColorMapBin, ColorStop, TransferFunction} from './Types';
+import objectAssignDeep from 'object-assign-deep';
 
 /**
  * This component creates a complete transfer function editor, combining the features from the transparency and color
@@ -61,13 +61,13 @@ export class TransferFunctionEditor {
    */
   constructor(container: HTMLElement | string, options?: TransferFunctionEditorOptions) {
     if (container) {
-      if (typeof container === "string") {
+      if (typeof container === 'string') {
         this.container = document.querySelector(container);
       } else {
         this.container = container;
       }
     } else {
-      throw "No element given!";
+      throw 'No element given!';
     }
 
     // Set all defaults.
@@ -77,22 +77,24 @@ export class TransferFunctionEditor {
     // !!! DON'T USE options AND defaultOptions AFTER THIS LINE !!!
     const finalOptions = objectAssignDeep(defaultOptions, options);
 
-    this.container.classList.add("tfe-transfer-function-editor");
+    this.container.classList.add('tfe-transfer-function-editor');
 
-    const transparencyEditorElement = document.createElement("div");
-    transparencyEditorElement.style.width = "100%";
-    transparencyEditorElement.style.minHeight = "50px";
+    const transparencyEditorElement = document.createElement('div');
+    transparencyEditorElement.style.width = '100%';
+    transparencyEditorElement.style.minHeight = '50px';
     this.container.append(transparencyEditorElement);
     this.transparencyEditor = new TransparencyEditor(transparencyEditorElement, finalOptions);
 
-    const colorMapEditorElement = document.createElement("div");
-    colorMapEditorElement.style.width = "100%";
-    colorMapEditorElement.style.minHeight = "10px";
+    const colorMapEditorElement = document.createElement('div');
+    colorMapEditorElement.style.width = '100%';
+    colorMapEditorElement.style.minHeight = '10px';
     this.container.append(colorMapEditorElement);
     this.colorMapEditor = new ColorMapEditor(colorMapEditorElement, finalOptions);
 
     // Connect the color map editor to the transparency editor.
-    this.colorMapEditor.addListener((colorMapEditor) => this.transparencyEditor.setColorMap(colorMapEditor.getColorMap()));
+    this.colorMapEditor.addListener((colorMapEditor) =>
+      this.transparencyEditor.setColorMap(colorMapEditor.getColorMap())
+    );
 
     this.transparencyEditor.setColorMap(this.colorMapEditor.getColorMap());
 

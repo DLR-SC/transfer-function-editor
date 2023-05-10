@@ -1,7 +1,7 @@
-import * as d3Interpolate from "d3-interpolate";
-import * as d3Hsv from "d3-hsv";
-import { ColorMap, ColorMapBin, InterpolationMethod } from "./Types";
-import * as d3Scale from "d3-scale";
+import * as d3Interpolate from 'd3-interpolate';
+import * as d3Hsv from 'd3-hsv';
+import {ColorMap, ColorMapBin, InterpolationMethod} from './Types';
+import * as d3Scale from 'd3-scale';
 
 /**
  * This function returns a color for a value in the given color map.
@@ -43,7 +43,7 @@ export function getColorMapBins(colorMap: ColorMap): Array<ColorMapBin> {
   const result: Array<ColorMapBin> = [];
 
   for (let i = 0; i < colorMap.bins; i++) {
-    const lowerBound = min + (i * binSize);
+    const lowerBound = min + i * binSize;
     const upperBound = lowerBound + binSize;
     const center = (lowerBound + upperBound) / 2;
     const color = colorRange(Math.floor(center * colorMap.bins) / (colorMap.bins - 1));

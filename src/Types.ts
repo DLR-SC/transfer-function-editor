@@ -57,14 +57,14 @@ export interface ColorMapBin {
 
 /** The methods of interpolation between color stops. See https://github.com/d3/d3-interpolate#color-spaces. */
 export enum InterpolationMethod {
-  RGB = "RGB",
-  HSL = "HSL",
-  HSL_LONG = "HSL_LONG",
-  HSV = "HSV",
-  HSV_LONG = "HSV_LONG",
-  HCL = "HCL",
-  HCL_LONG = "HCL_LONG",
-  LAB = "LAB",
-  CUBEHELIX = "CUBEHELIX",
-  CUBEHELIX_LONG = "CUBEHELIX_LONG",
+  RGB = 'RGB',
+  HSL = 'HSL',
+  HSL_LONG = 'HSL_LONG',
+  HSV = 'HSV',
+  HSV_LONG = 'HSV_LONG',
+  HCL = 'HCL',
+  HCL_LONG = 'HCL_LONG',
+  LAB = 'LAB',
+  CUBEHELIX = 'CUBEHELIX',
+  CUBEHELIX_LONG = 'CUBEHELIX_LONG',
 }

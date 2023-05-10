@@ -1,20 +1,20 @@
-import { AlphaStop, ColorMap, InterpolationMethod, TransferFunction } from "./Types";
-import * as d3Scale from "d3-scale";
-import * as d3Color from "d3-color";
-import * as d3Interpolate from "d3-interpolate";
-import objectAssignDeep from "object-assign-deep";
-import { getColorFromColorMapAt } from "./convert";
+import {AlphaStop, ColorMap, InterpolationMethod, TransferFunction} from './Types';
+import * as d3Scale from 'd3-scale';
+import * as d3Color from 'd3-color';
+import * as d3Interpolate from 'd3-interpolate';
+import objectAssignDeep from 'object-assign-deep';
+import {getColorFromColorMapAt} from './convert';
 
 /**
  * This creates an editor to create transparency mappings.
  *
  * @example
  *   const te = new TransparencyEditor("#te", {
-*      initialAlphaStops: [
-*        { stop: 0, alpha: 0 },
-*        { stop: 0.5, alpha: 0.5 },
-*        { stop: 1, alpha: 1 }
-*      ]
+ *      initialAlphaStops: [
+ *        { stop: 0, alpha: 0 },
+ *        { stop: 0.5, alpha: 0.5 },
+ *        { stop: 1, alpha: 1 }
+ *      ]
  *   });
  *
  *   te.addListener((transparencyEditor) => {
@@ -71,32 +71,32 @@ export class TransparencyEditor {
    */
   constructor(container: HTMLElement | string, options?: TransparencyEditorOptions) {
     if (container) {
-      if (typeof container === "string") {
+      if (typeof container === 'string') {
         this.container = document.querySelector(container);
       } else {
         this.container = container;
       }
     } else {
-      throw "No element given!";
+      throw 'No element given!';
     }
 
     // Set all defaults.
     const defaultOption: TransparencyEditorOptions = {
       initialAlphaStops: [
-        { stop: 0, alpha: 0 },
-        { stop: 0.5, alpha: 0.5 },
-        { stop: 1, alpha: 1 }
+        {stop: 0, alpha: 0},
+        {stop: 0.5, alpha: 0.5},
+        {stop: 1, alpha: 1},
       ],
       initialColorMap: {
         colorStops: [
-          { stop: 0, color: "black" },
-          { stop: 1, color: "black" }
+          {stop: 0, color: 'black'},
+          {stop: 1, color: 'black'},
         ],
-        interpolationMethod: InterpolationMethod.RGB
+        interpolationMethod: InterpolationMethod.RGB,
       },
       controlPointSize: 7,
       showAlphaGrid: true,
-      alphaGridSize: 8
+      alphaGridSize: 8,
     };
 
     // Merge the options with the defaults.
@@ -111,14 +111,14 @@ export class TransparencyEditor {
     this.showAlphaGrid = finalOptions.showAlphaGrid;
     this.alphaGridSize = finalOptions.alphaGridSize;
 
-    this.container.classList.add("tfe-transparency-editor");
+    this.container.classList.add('tfe-transparency-editor');
 
-    this.canvas = document.createElement("canvas");
+    this.canvas = document.createElement('canvas');
     this.canvas.width = this.container.clientWidth;
     this.canvas.height = this.container.clientHeight;
-    this.canvas.style.imageRendering = "pixelated";
+    this.canvas.style.imageRendering = 'pixelated';
     this.container.appendChild(this.canvas);
-    this.ctx = this.canvas.getContext("2d");
+    this.ctx = this.canvas.getContext('2d');
     this.updateAlphaRange();
     this.draw();
     this.addEventListeners();
@@ -143,7 +143,7 @@ export class TransparencyEditor {
 
   /** Returns the complete transfer function including the alpha values and the color map. */
   public getTransferFunction(): TransferFunction {
-    return { alphaStops: this.alphaStops, colorMap: this.colorMap };
+    return {alphaStops: this.alphaStops, colorMap: this.colorMap};
   }
 
   /** Returns the color, excluding transparency, at the given stop. */
@@ -165,7 +165,7 @@ export class TransparencyEditor {
 
   /** Adds a control point at the given stop with the given alpha value. */
   public addControlPoint(stop, alpha): void {
-    this.alphaStops.push({ stop, alpha });
+    this.alphaStops.push({stop, alpha});
     this.sortControlPoints();
     this.updateAlphaRange();
     this.sendUpdate();
@@ -238,7 +238,7 @@ export class TransparencyEditor {
 
     // If the alpha grid is enabled we draw it.
     if (this.showAlphaGrid) {
-      this.ctx.fillStyle = "#CACACA";
+      this.ctx.fillStyle = '#CACACA';
       for (let y = 0; y < this.canvas.height / this.alphaGridSize; y++) {
         for (let x = 0; x < this.canvas.width / this.alphaGridSize; x++) {
           if ((x % 2 == 0 && y % 2 == 0) || (x % 2 == 1 && y % 2 == 1)) {
@@ -260,7 +260,7 @@ export class TransparencyEditor {
     }
 
     // Draw the lines between points.
-    this.ctx.strokeStyle = "black";
+    this.ctx.strokeStyle = 'black';
     this.ctx.beginPath();
     for (let i = 0; i < this.alphaStops.length; i++) {
       const x = this.alphaStops[i].stop * this.canvas.width;
@@ -274,11 +274,11 @@ export class TransparencyEditor {
     this.ctx.stroke();
 
     // Draw the control points.
-    this.ctx.fillStyle = "white";
+    this.ctx.fillStyle = 'white';
     for (let i = 0; i < this.alphaStops.length; i++) {
       const x = this.alphaStops[i].stop * this.canvas.width;
       const y = (1 - this.alphaStops[i].alpha) * this.canvas.height;
-      this.ctx.strokeStyle = "black";
+      this.ctx.strokeStyle = 'black';
       this.ctx.beginPath();
       this.ctx.arc(x, y, this.controlPointSize, 0, 2 * Math.PI);
       this.ctx.fill();
@@ -292,10 +292,10 @@ export class TransparencyEditor {
   }
 
   /** This helper function calculates which pixels correspond to which stop and alpha value. */
-  private pixelToNormalized(x: number, y: number): { stop: number; alpha: number } {
+  private pixelToNormalized(x: number, y: number): {stop: number; alpha: number} {
     const stop = Math.max(0, Math.min(1, x / this.canvas.width));
-    const alpha = Math.max(0, Math.min(1, 1 - (y / this.canvas.height)));
-    return { stop, alpha };
+    const alpha = Math.max(0, Math.min(1, 1 - y / this.canvas.height));
+    return {stop, alpha};
   }
 
   /** Adds event listeners for creating, moving and deleting control points. */
@@ -313,7 +313,7 @@ export class TransparencyEditor {
      * This function checks if a control point was selected, sets the dragIndex and isDragging fields and attaches a
      * mouse move listener to the document. This allows for more consistent control.
      */
-    const checkDragStart = (e: { offsetX: number; offsetY: number }) => {
+    const checkDragStart = (e: {offsetX: number; offsetY: number}) => {
       // Figure out which control point was selected.
       dragIndex = -1;
       for (let i = 0; i < this.alphaStops.length; i++) {
@@ -330,27 +330,31 @@ export class TransparencyEditor {
       if (isDragging) {
         // Attach a mouse move listener to the document.
         abortController = new AbortController();
-        document.addEventListener("mousemove", (e) => {
-          e.preventDefault();
-          const offsetX = e.clientX - this.canvas.getBoundingClientRect().x;
-          const offsetY = e.clientY - this.canvas.getBoundingClientRect().y;
+        document.addEventListener(
+          'mousemove',
+          (e) => {
+            e.preventDefault();
+            const offsetX = e.clientX - this.canvas.getBoundingClientRect().x;
+            const offsetY = e.clientY - this.canvas.getBoundingClientRect().y;
 
-          const { stop, alpha } = this.pixelToNormalized(offsetX, offsetY);
+            const {stop, alpha} = this.pixelToNormalized(offsetX, offsetY);
 
-          if (dragIndex === 0) {
-            this.alphaStops[dragIndex].alpha = alpha;
-          } else if (dragIndex === this.alphaStops.length - 1) {
-            this.alphaStops[dragIndex].alpha = alpha;
-          } else {
-            const leftBound = this.alphaStops[dragIndex - 1].stop + Number.EPSILON;
-            const rightBound = this.alphaStops[dragIndex + 1].stop - Number.EPSILON;
-            this.alphaStops[dragIndex].stop = Math.max(leftBound, Math.min(rightBound, stop));
-            this.alphaStops[dragIndex].alpha = alpha;
-          }
-          this.updateAlphaRange();
-          this.sendUpdate();
-          this.draw();
-        }, { signal: abortController.signal });
+            if (dragIndex === 0) {
+              this.alphaStops[dragIndex].alpha = alpha;
+            } else if (dragIndex === this.alphaStops.length - 1) {
+              this.alphaStops[dragIndex].alpha = alpha;
+            } else {
+              const leftBound = this.alphaStops[dragIndex - 1].stop + Number.EPSILON;
+              const rightBound = this.alphaStops[dragIndex + 1].stop - Number.EPSILON;
+              this.alphaStops[dragIndex].stop = Math.max(leftBound, Math.min(rightBound, stop));
+              this.alphaStops[dragIndex].alpha = alpha;
+            }
+            this.updateAlphaRange();
+            this.sendUpdate();
+            this.draw();
+          },
+          {signal: abortController.signal}
+        );
       }
     };
 
@@ -359,7 +363,7 @@ export class TransparencyEditor {
     //  - Adding a control point if the left mouse button was pressed anywhere else (also starts dragging the newly
     //    created point).
     //  - Removing a control point on middle click.
-    this.canvas.addEventListener("mousedown", (e) => {
+    this.canvas.addEventListener('mousedown', (e) => {
       if (e.button === 0) {
         // Left click
         checkDragStart(e);
@@ -371,7 +375,7 @@ export class TransparencyEditor {
 
       if (e.button === 0) {
         // Left click
-        const { stop, alpha } = this.pixelToNormalized(e.offsetX, e.offsetY);
+        const {stop, alpha} = this.pixelToNormalized(e.offsetX, e.offsetY);
         this.addControlPoint(stop, alpha);
         checkDragStart(e);
       } else if (e.button === 1) {
@@ -382,7 +386,7 @@ export class TransparencyEditor {
     });
 
     // This listener is responsible to stop the dragging action, once the mouse is lifted.
-    document.addEventListener("mouseup", () => {
+    document.addEventListener('mouseup', () => {
       if (isDragging && abortController) {
         abortController.abort();
         abortController = null;
