@@ -36,9 +36,9 @@ export class TransparencyEditor {
 
     const defaultOption: TransparencyEditorOptions = {
       initialTransferFunction: [
-        { stop: 0, alpha: 1 },
+        { stop: 0, alpha: 0 },
         { stop: 0.5, alpha: 0.5 },
-        { stop: 1, alpha: 0 }
+        { stop: 1, alpha: 1 }
       ],
       initialColorMap: {
         colorStops: [
@@ -99,8 +99,7 @@ export class TransparencyEditor {
 
   public getRGBA(stop: number): string {
     const color = d3Color.rgb(this.getRGB(stop));
-    const a = this.getAlpha(stop);
-    color.opacity = 1 - a;
+    color.opacity = this.getAlpha(stop);
     return color.formatHex8();
   }
 
@@ -117,7 +116,7 @@ export class TransparencyEditor {
     for (let i = 1; i < this.transferFunction.length - 1; i++) {
       const controlPoint = this.transferFunction[i];
       const dx = controlPoint.stop * this.canvas.width - x;
-      const dy = controlPoint.alpha * this.canvas.height - y;
+      const dy = (1 - controlPoint.alpha) * this.canvas.height - y;
       if (Math.sqrt(dx * dx + dy * dy) < this.controlPointSize) {
         indexToDelete = i;
         break;
@@ -179,10 +178,10 @@ export class TransparencyEditor {
     for (let i = 0; i < this.canvas.width; ++i) {
       const alpha = this.getAlpha(i / (this.canvas.width - 1));
       this.ctx.fillStyle = this.getRGBA(i / (this.canvas.width - 1));
-      this.ctx.fillRect(i, alpha * this.canvas.height, 1, (1 - alpha) * this.canvas.height);
+      this.ctx.fillRect(i, (1 - alpha) * this.canvas.height, 1, alpha * this.canvas.height);
 
       if (this.showAlphaGrid) {
-        this.ctx.clearRect(i, 0, 1, alpha * this.canvas.height);
+        this.ctx.clearRect(i, 0, 1, (1 - alpha) * this.canvas.height);
       }
     }
 
@@ -191,7 +190,7 @@ export class TransparencyEditor {
     this.ctx.beginPath();
     for (let i = 0; i < this.transferFunction.length; i++) {
       const x = this.transferFunction[i].stop * this.canvas.width;
-      const y = this.transferFunction[i].alpha * this.canvas.height;
+      const y = (1 - this.transferFunction[i].alpha) * this.canvas.height;
       if (i === 0) {
         this.ctx.moveTo(x, y);
       } else {
@@ -204,7 +203,7 @@ export class TransparencyEditor {
     this.ctx.fillStyle = "white";
     for (let i = 0; i < this.transferFunction.length; i++) {
       const x = this.transferFunction[i].stop * this.canvas.width;
-      const y = this.transferFunction[i].alpha * this.canvas.height;
+      const y = (1 - this.transferFunction[i].alpha) * this.canvas.height;
       this.ctx.strokeStyle = "black";
       this.ctx.beginPath();
       this.ctx.arc(x, y, this.controlPointSize, 0, 2 * Math.PI);
@@ -219,7 +218,7 @@ export class TransparencyEditor {
 
   private pixelToNormalized(x: number, y: number): { stop: number; alpha: number } {
     const stop = Math.max(0, Math.min(1, x / this.canvas.width));
-    const alpha = Math.max(0, Math.min(1, y / this.canvas.height));
+    const alpha = Math.max(0, Math.min(1, 1 - (y / this.canvas.height)));
     return { stop, alpha };
   }
 
@@ -233,7 +232,7 @@ export class TransparencyEditor {
       for (let i = 0; i < this.transferFunction.length; i++) {
         const controlPoint = this.transferFunction[i];
         const dx = controlPoint.stop * this.canvas.width - e.offsetX;
-        const dy = controlPoint.alpha * this.canvas.height - e.offsetY;
+        const dy = (1 - controlPoint.alpha) * this.canvas.height - e.offsetY;
         if (Math.sqrt(dx * dx + dy * dy) < this.controlPointSize) {
           dragIndex = i;
           isDragging = true;
