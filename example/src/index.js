@@ -2,7 +2,7 @@ import {
   TransferFunctionEditor,
   TransparencyEditor,
   ColorMapEditor,
-  ColorPicker
+  ColorPicker, getDiscreteColorMap
 } from "../../dist/transfer-function-editor.modern";
 
 const tf = new TransferFunctionEditor("#tf-editor", {
@@ -41,7 +41,8 @@ const cm = new ColorMapEditor("#cm", {
 });
 
 cm.addListener((cm) => {
-  document.querySelector("#cm-output").innerText = JSON.stringify(cm.getColorMap(), null, 2);
+  const result = cm.discrete ? cm.getDiscreteColorMap() : cm.getColorMap();
+  document.querySelector("#cm-output").innerText = JSON.stringify(result, null, 2);
 });
 
 const cp = new ColorPicker("#cp", { initialColor: "cyan" });

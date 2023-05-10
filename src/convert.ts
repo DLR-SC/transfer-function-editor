@@ -1,8 +1,11 @@
 import * as d3Interpolate from "d3-interpolate";
 import * as d3Hsv from "d3-hsv";
-import { ColorMap, InterpolationMethod } from "./Types";
+import { ColorMap, ColorMapBin, InterpolationMethod } from "./Types";
 import * as d3Scale from "d3-scale";
 
+/**
+ * This function returns a color for a value in the given color map.
+ */
 export function getColorFromColorMapAt(colorMap: ColorMap, value: number): string {
   const colorRange = d3Scale
     .scaleLinear<string, number>()
@@ -17,6 +20,42 @@ export function getColorFromColorMapAt(colorMap: ColorMap, value: number): strin
   return colorRange(value);
 }
 
+/**
+ * This function returns an array of bins with their color, if the color map is discrete. Otherwise, it will return an
+ * empty array.
+ */
+export function getColorMapBins(colorMap: ColorMap): Array<ColorMapBin> {
+  if (!colorMap.discrete || !colorMap.bins) {
+    return [];
+  }
+
+  const min = colorMap.colorStops[0].stop;
+  const max = colorMap.colorStops[colorMap.colorStops.length - 1].stop;
+  const range = max - min;
+  const binSize = range / colorMap.bins;
+
+  const colorRange = d3Scale
+    .scaleLinear<string, number>()
+    .domain(colorMap.colorStops.map((entry) => entry.stop))
+    .range(colorMap.colorStops.map((entry) => entry.color))
+    .interpolate(getColorInterpolator(colorMap.interpolationMethod));
+
+  const result: Array<ColorMapBin> = [];
+
+  for (let i = 0; i < colorMap.bins; i++) {
+    const lowerBound = min + (i * binSize);
+    const upperBound = lowerBound + binSize;
+    const center = (lowerBound + upperBound) / 2;
+    const color = colorRange(Math.floor(center * colorMap.bins) / (colorMap.bins - 1));
+    result.push({lowerBound, center, upperBound, color});
+  }
+
+  return result;
+}
+
+/**
+ * This is a helper method, mapping the InterpolationMethod enum to d3 interpolation functions.
+ */
 export function getColorInterpolator(interpolationMethods: InterpolationMethod) {
   switch (interpolationMethods) {
     case InterpolationMethod.RGB:

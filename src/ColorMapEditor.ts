@@ -1,7 +1,7 @@
-import { ColorMap, ColorStop, InterpolationMethod } from "./Types";
+import { ColorMap, ColorStop, ColorMapBin, InterpolationMethod } from "./Types";
 import { ColorPicker } from "./ColorPicker";
 import objectAssignDeep from "object-assign-deep";
-import { getColorFromColorMapAt } from "./convert";
+import { getColorFromColorMapAt, getColorMapBins } from "./convert";
 import * as d3Color from "d3-color";
 
 /**
@@ -256,6 +256,14 @@ export class ColorMapEditor {
       discrete: this.discrete || undefined,
       bins: this.discrete ? this.bins : undefined
     };
+  }
+
+  /**
+   * This function returns an array of bins with their color, if the color map is discrete. Otherwise, it will return an
+   * empty array.
+   */
+  public getDiscreteColorMap(): Array<ColorMapBin> {
+    return getColorMapBins(this.getColorMap());
   }
 
   /**
