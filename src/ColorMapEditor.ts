@@ -1,4 +1,4 @@
-import { ColorMap, ColorStop, ColorMapBin, InterpolationMethod } from "./Types";
+import { ColorMap, ColorMapBin, ColorStop, InterpolationMethod } from "./Types";
 import { ColorPicker } from "./ColorPicker";
 import objectAssignDeep from "object-assign-deep";
 import { getColorFromColorMapAt, getColorMapBins } from "./convert";
@@ -8,7 +8,6 @@ import * as d3Color from "d3-color";
  * This creates a color map editor component, where the user can create a color gradient using stops and colors.
  *
  * @example
- * ```
  *   const cm = new ColorMapEditor("#cm", {
  *     initialColorMap: {
  *       colorStops: [
@@ -21,12 +20,12 @@ import * as d3Color from "d3-color";
  *
  *   cm.addListener((colorMapEditor) => {
  *     console.log(colorMapEditor.getColorMap());
+ *     // output:
  *     // {
  *     //   colorStops: [{stop: 0, color: "#0f0"},{stop: 0.5, color: "#f00"},{stop: 1, color: "#000"}],
  *     //   interpolationMethod: "HSL_LONG"
  *     // }
  *   });
- * ```
  */
 export class ColorMapEditor {
   /** The element, in which the color map editor gets embedded. */
@@ -48,7 +47,7 @@ export class ColorMapEditor {
   private interpolationMethod: InterpolationMethod;
 
   /** The size of the control points. Might become configurable in the future. */
-  private controlPointSize: number = 7;
+  private controlPointSize: number;
 
   /** If the color map should have a discrete amount of values. */
   private discrete: boolean;
@@ -110,7 +109,8 @@ export class ColorMapEditor {
       },
       showStopNumbers: false,
       interpolationMethodsEditable: true,
-      binSelectorEditable: true
+      binSelectorEditable: true,
+      controlPointSize: 7
     };
 
     // Merge the options with the defaults.
@@ -122,6 +122,7 @@ export class ColorMapEditor {
     this.interpolationMethod = finalOptions.initialColorMap.interpolationMethod;
     this.discrete = finalOptions.initialColorMap.discrete;
     this.bins = finalOptions.initialColorMap.bins;
+    this.controlPointSize = finalOptions.controlPointSize;
 
     this.container.classList.add("tfe-color-map-editor");
 
@@ -380,8 +381,7 @@ export class ColorMapEditor {
             const offsetX = e.clientX - this.canvas.getBoundingClientRect().x;
             const leftBound = this.colorStops[dragIndex - 1].stop + Number.EPSILON;
             const rightBound = this.colorStops[dragIndex + 1].stop - Number.EPSILON;
-            const x = Math.max(leftBound, Math.min(rightBound, offsetX / this.canvas.width));
-            this.colorStops[dragIndex].stop = x;
+            this.colorStops[dragIndex].stop = Math.max(leftBound, Math.min(rightBound, offsetX / this.canvas.width));
             this.draw();
             this.sendUpdates();
           }
@@ -681,8 +681,8 @@ export interface ColorMapEditorOptions {
      * The initial color map.
      * Default:
      * [
-     *   { stop: 0, color: "blue" },
-     *   { stop: 0.5, color: "white" },
+     *   { stop: 0, color: "green" },
+     *   { stop: 0.5, color: "yellow" },
      *   { stop: 1, color: "red" }
      * ]
      */
@@ -724,4 +724,10 @@ export interface ColorMapEditorOptions {
    * Default: true
    */
   binSelectorEditable?: boolean;
+
+  /**
+   * The size of control points in pixel.
+   * Default: 7
+   */
+  controlPointSize?: number;
 }

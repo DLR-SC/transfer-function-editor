@@ -2,7 +2,7 @@ import {
   TransferFunctionEditor,
   TransparencyEditor,
   ColorMapEditor,
-  ColorPicker, getDiscreteColorMap
+  ColorPicker
 } from "../../dist/transfer-function-editor.modern";
 
 const tf = new TransferFunctionEditor("#tf-editor", {
@@ -11,7 +11,8 @@ const tf = new TransferFunctionEditor("#tf-editor", {
       {stop: 0, color: "blue"},
       {stop: 0.5, color: "white"},
       {stop: 1, color: "red"}
-    ]
+    ],
+    interpolationMethod: "HSL"
   }
 });
 tf.addListener((tf) => {

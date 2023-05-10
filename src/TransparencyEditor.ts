@@ -9,7 +9,6 @@ import { getColorFromColorMapAt } from "./convert";
  * This creates an editor to create transparency mappings.
  *
  * @example
- * ```
  *   const te = new TransparencyEditor("#te", {
 *      initialAlphaStops: [
 *        { stop: 0, alpha: 0 },
@@ -20,13 +19,13 @@ import { getColorFromColorMapAt } from "./convert";
  *
  *   te.addListener((transparencyEditor) => {
  *     console.log(transparencyEditor.getAlphaStops());
+ *     // output:
  *     // [
  *     //   { stop: 0, alpha: 0 },
  *     //   { stop: 0.5, alpha: 0.5 },
  *     //   { stop: 1, alpha: 1 }
  *     // ]
  *   });
- * ```
  */
 export class TransparencyEditor {
   /** The element, in which the transparency editor gets embedded. */
@@ -63,6 +62,7 @@ export class TransparencyEditor {
   /** This gets called, when the transparency changes to notify users of this library. */
   private callbacks: Map<number, (transparencyEditor: TransparencyEditor) => void> = new Map();
   private callbackCounter = 0;
+
   /**
    * Creates a new transparency editor inside the given container.
    *
@@ -192,6 +192,11 @@ export class TransparencyEditor {
     }
   }
 
+  /** Get the alpha stops. */
+  public getAlphaStops(): Array<AlphaStop> {
+    return this.alphaStops;
+  }
+
   /** Replace the existing alpha stops with new ones. */
   public setAlphaStops(alphaStops: Array<AlphaStop>) {
     this.alphaStops = alphaStops;
@@ -200,9 +205,9 @@ export class TransparencyEditor {
     this.draw();
   }
 
-  /** Get the alpha stops. */
-  public getAlphaStops(): Array<AlphaStop> {
-    return this.alphaStops;
+  /** Get the current color map. */
+  public getColorMap(): ColorMap {
+    return this.colorMap;
   }
 
   /** Set a new color map. */
