@@ -1,6 +1,6 @@
 /** A single entry for the transparency component of a transfer function. */
 export interface AlphaStop {
-  /** The value at which the alpha values applies. */
+  /** The value at which the alpha value applies. */
   stop: number;
 
   /** The amount of transparency. 0 is fully transparent, 1 is fully opaque. */

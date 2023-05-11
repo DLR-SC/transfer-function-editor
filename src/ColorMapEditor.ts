@@ -61,19 +61,19 @@ export class ColorMapEditor {
   /** The color picker for editing control point colors is embedded in this div. */
   private readonly colorPickerContainer: HTMLDivElement;
 
-  /** If the interpolation method is set to editable this element is the selection dropdown. */
+  /** If the interpolation method is set to editable, this element is the selection dropdown. */
   private interpolationMethodElement?: HTMLSelectElement;
 
-  /** If the bins are set to editable this element shows a checkbox to toggle the discretization. */
+  /** If the bins are set to editable, this element shows a checkbox to toggle the discretization. */
   private discreteElement?: HTMLInputElement;
 
-  /** If the bins are set to editable this element shows a number input field to configure the number of bins. */
+  /** If the bins are set to editable, this element shows a number input field to configure the number of bins. */
   private binsElement?: HTMLInputElement;
 
   /** The color picker for editing control point colors. */
   private colorPicker: ColorPicker;
 
-  /** This gets called, when the color changes to notify users of this library. */
+  /** This gets called when the color changes to notify users of this library. */
   private callbacks: Map<number, (colorMapEditor: ColorMapEditor) => void> = new Map();
   private callbackCounter = 0;
 
@@ -103,7 +103,7 @@ export class ColorMapEditor {
           {stop: 0.5, color: 'yellow'},
           {stop: 1, color: 'red'},
         ],
-        interpolationMethod: InterpolationMethod.HSL_LONG,
+        interpolationMethod: InterpolationMethod.HSL,
         discrete: false,
         bins: 7,
       },
@@ -192,7 +192,7 @@ export class ColorMapEditor {
   }
 
   /**
-   * Sets, if the resulting color map is discrete or continuous. If discrete is true the bins property controls how many
+   * Sets, if the resulting color map is discrete or continuous. If discrete is true, the bins property controls how many
    * bins are shown.
    */
   public setDiscrete(discrete: boolean) {

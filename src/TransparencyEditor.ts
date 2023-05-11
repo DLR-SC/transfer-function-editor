@@ -41,7 +41,7 @@ export class TransparencyEditor {
   private alphaStops: Array<AlphaStop>;
 
   /**
-   * This color map is used for drawing a gradient in the background. It can be set via function calls, but not vie user
+   * This color map is used for drawing a gradient in the background. It can be set via function calls, but not via user
    * interaction. For a complete transfer function editor with an editable color map use the TransferFunctionEditor
    * class.
    */
