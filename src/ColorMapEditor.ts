@@ -3,6 +3,7 @@ import {ColorPicker} from './ColorPicker';
 import objectAssignDeep from 'object-assign-deep';
 import {getColorFromColorMapAt, getColorMapBins} from './convert';
 import * as d3Color from 'd3-color';
+import { drawControlPoint } from "./draw";
 
 /**
  * This creates a color map editor component, where the user can create a color gradient using stops and colors.
@@ -317,13 +318,7 @@ export class ColorMapEditor {
       this.ctx.arc(x, y, this.controlPointSize, 0, 2 * Math.PI);
       this.ctx.fill();
 
-      const strokes = 10;
-      for (let i = 0; i < strokes; i++) {
-        this.ctx.beginPath();
-        this.ctx.strokeStyle = i % 2 === 0 ? 'white' : 'black';
-        this.ctx.arc(x, y, this.controlPointSize, (i / strokes) * (2 * Math.PI), ((i + 1) / strokes) * (2 * Math.PI));
-        this.ctx.stroke();
-      }
+      drawControlPoint(this.ctx, x, y, this.controlPointSize);
 
       // Below the control point we draw the number of the stop, if enabled.
       if (this.showStopNumbers) {

@@ -1,5 +1,6 @@
 import {hsl as d3HSL} from 'd3-color';
 import {hsv as d3HSV, HSVColor} from 'd3-hsv';
+import { drawControlPoint } from "./draw";
 
 /**
  * This creates a color picker component, that will be embedded in the given container. The color can be chosen with a
@@ -376,19 +377,7 @@ export class ColorPicker {
     // Draw the control point. To ensure visibility everywhere it is an alternating circle in white and black.
     const x = this.hsv.s * this.CANVAS_SIZE;
     const y = (1 - this.hsv.v) * this.CANVAS_SIZE;
-    const strokes = 10;
-    for (let i = 0; i < strokes; i++) {
-      this.svContext.beginPath();
-      this.svContext.strokeStyle = i % 2 === 0 ? 'white' : 'black';
-      this.svContext.arc(
-        x,
-        y,
-        this.controlPointSize,
-        (i / strokes) * (2 * Math.PI),
-        ((i + 1) / strokes) * (2 * Math.PI)
-      );
-      this.svContext.stroke();
-    }
+    drawControlPoint(this.svContext, x, y, this.controlPointSize);
   }
 
   /** Draws the hue picker. */
@@ -408,19 +397,7 @@ export class ColorPicker {
     // Draw the control point. To ensure visibility everywhere it is an alternating circle in white and black.
     const x = this.hCanvas.width / 2;
     const y = (1 - this.hsv.h / 360) * this.hCanvas.height;
-    const strokes = 10;
-    for (let i = 0; i < strokes; i++) {
-      this.hContext.beginPath();
-      this.hContext.strokeStyle = i % 2 === 0 ? 'white' : 'black';
-      this.hContext.arc(
-        x,
-        y,
-        this.controlPointSize,
-        (i / strokes) * (2 * Math.PI),
-        ((i + 1) / strokes) * (2 * Math.PI)
-      );
-      this.hContext.stroke();
-    }
+    drawControlPoint(this.hContext, x, y, this.controlPointSize);
   }
 
   /** Adds all the mouse input events for moving the control point of the saturation-value picker around. */
