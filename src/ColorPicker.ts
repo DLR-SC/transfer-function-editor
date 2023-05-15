@@ -1,6 +1,6 @@
 import {hsl as d3HSL} from 'd3-color';
 import {hsv as d3HSV, HSVColor} from 'd3-hsv';
-import { drawControlPoint } from "./draw";
+import {drawControlPoint} from './draw';
 
 /**
  * This creates a color picker component, that will be embedded in the given container. The color can be chosen with a
@@ -183,7 +183,7 @@ export class ColorPicker {
 
     // Prepare the canvas and context for the hue picker.
     this.hCanvas = this.container.querySelector<HTMLCanvasElement>('.tfe-color-picker-h-picker-canvas');
-    this.hCanvas.style.background = "linear-gradient(#f00, #f0f, #00f, #0ff, #0f0, #ff0, #f00)";
+    this.hCanvas.style.background = 'linear-gradient(#f00, #f0f, #00f, #0ff, #0f0, #ff0, #f00)';
 
     this.hContext = this.hCanvas.getContext('2d', {alpha: true});
     this.drawHPicker();
@@ -373,16 +373,26 @@ export class ColorPicker {
     this.svContext.fillRect(0, 0, this.CANVAS_SIZE, this.CANVAS_SIZE);
 
     // 2. Draw a white to transparent gradient for the saturation from left to right.
-    const saturationGradient = this.svContext.createLinearGradient(0, this.CANVAS_SIZE / 2, this.CANVAS_SIZE, this.CANVAS_SIZE / 2);
-    saturationGradient.addColorStop(0, "rgb(255, 255, 255)");
-    saturationGradient.addColorStop(1, "rgb(255, 255, 255, 0)");
+    const saturationGradient = this.svContext.createLinearGradient(
+      0,
+      this.CANVAS_SIZE / 2,
+      this.CANVAS_SIZE,
+      this.CANVAS_SIZE / 2
+    );
+    saturationGradient.addColorStop(0, 'rgb(255, 255, 255)');
+    saturationGradient.addColorStop(1, 'rgb(255, 255, 255, 0)');
     this.svContext.fillStyle = saturationGradient;
     this.svContext.fillRect(0, 0, this.CANVAS_SIZE, this.CANVAS_SIZE);
 
     // 3. Draw a black to transparent gradient for the value from bottom to top.
-    const valueGradient = this.svContext.createLinearGradient(this.CANVAS_SIZE / 2, this.CANVAS_SIZE, this.CANVAS_SIZE / 2, 0);
-    valueGradient.addColorStop(0, "rgb(0, 0, 0)");
-    valueGradient.addColorStop(1, "rgb(0, 0, 0, 0)");
+    const valueGradient = this.svContext.createLinearGradient(
+      this.CANVAS_SIZE / 2,
+      this.CANVAS_SIZE,
+      this.CANVAS_SIZE / 2,
+      0
+    );
+    valueGradient.addColorStop(0, 'rgb(0, 0, 0)');
+    valueGradient.addColorStop(1, 'rgb(0, 0, 0, 0)');
     this.svContext.fillStyle = valueGradient;
     this.svContext.fillRect(0, 0, this.CANVAS_SIZE, this.CANVAS_SIZE);
 

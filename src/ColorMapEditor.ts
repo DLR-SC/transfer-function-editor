@@ -3,7 +3,7 @@ import {ColorPicker} from './ColorPicker';
 import objectAssignDeep from 'object-assign-deep';
 import {getColorFromColorMapAt, getColorMapBins} from './convert';
 import * as d3Color from 'd3-color';
-import { drawControlPoint } from "./draw";
+import {drawControlPoint} from './draw';
 
 /**
  * This creates a color map editor component, where the user can create a color gradient using stops and colors.
