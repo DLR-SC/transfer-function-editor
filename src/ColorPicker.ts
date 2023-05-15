@@ -183,7 +183,9 @@ export class ColorPicker {
 
     // Prepare the canvas and context for the hue picker.
     this.hCanvas = this.container.querySelector<HTMLCanvasElement>('.tfe-color-picker-h-picker-canvas');
-    this.hContext = this.hCanvas.getContext('2d', {alpha: false});
+    this.hCanvas.style.background = "linear-gradient(#f00, #f0f, #00f, #0ff, #0f0, #ff0, #f00)";
+
+    this.hContext = this.hCanvas.getContext('2d', {alpha: true});
     this.drawHPicker();
     this.addHEventListener();
 
@@ -364,15 +366,25 @@ export class ColorPicker {
 
   /** Draws the saturation-value picker. */
   private drawSVPicker() {
-    // This draws the hsv gradient line by line.
-    for (let y = 0; y < this.CANVAS_SIZE; y++) {
-      const gradient = this.svContext.createLinearGradient(0, 0, this.CANVAS_SIZE, 0);
-      gradient.addColorStop(0, d3HSV(this.hsv.h, 0, 1 - y / this.CANVAS_SIZE).formatHex());
-      gradient.addColorStop(1, d3HSV(this.hsv.h, 1, 1 - y / this.CANVAS_SIZE).formatHex());
+    // We draw the saturation value picker in three steps:
 
-      this.svContext.fillStyle = gradient;
-      this.svContext.fillRect(0, y, this.CANVAS_SIZE, 1);
-    }
+    // 1. Draw the current hue with full saturation and value as the backgrund color.
+    this.svContext.fillStyle = d3HSV(this.hsv.h, 1, 1).formatHex();
+    this.svContext.fillRect(0, 0, this.CANVAS_SIZE, this.CANVAS_SIZE);
+
+    // 2. Draw a white to transparent gradient for the saturation from left to right.
+    const saturationGradient = this.svContext.createLinearGradient(0, this.CANVAS_SIZE / 2, this.CANVAS_SIZE, this.CANVAS_SIZE / 2);
+    saturationGradient.addColorStop(0, "rgb(255, 255, 255)");
+    saturationGradient.addColorStop(1, "rgb(255, 255, 255, 0)");
+    this.svContext.fillStyle = saturationGradient;
+    this.svContext.fillRect(0, 0, this.CANVAS_SIZE, this.CANVAS_SIZE);
+
+    // 3. Draw a black to transparent gradient for the value from bottom to top.
+    const valueGradient = this.svContext.createLinearGradient(this.CANVAS_SIZE / 2, this.CANVAS_SIZE, this.CANVAS_SIZE / 2, 0);
+    valueGradient.addColorStop(0, "rgb(0, 0, 0)");
+    valueGradient.addColorStop(1, "rgb(0, 0, 0, 0)");
+    this.svContext.fillStyle = valueGradient;
+    this.svContext.fillRect(0, 0, this.CANVAS_SIZE, this.CANVAS_SIZE);
 
     // Draw the control point. To ensure visibility everywhere it is an alternating circle in white and black.
     const x = this.hsv.s * this.CANVAS_SIZE;
@@ -383,16 +395,7 @@ export class ColorPicker {
   /** Draws the hue picker. */
   private drawHPicker() {
     // Draw the hue gradient.
-    const gradient = this.hContext.createLinearGradient(0, 0, 0, this.hCanvas.height);
-    gradient.addColorStop(0 / 6, '#ff0000');
-    gradient.addColorStop(1 / 6, '#ff00ff');
-    gradient.addColorStop(2 / 6, '#0000ff');
-    gradient.addColorStop(3 / 6, '#00ffff');
-    gradient.addColorStop(4 / 6, '#00ff00');
-    gradient.addColorStop(5 / 6, '#ffff00');
-    gradient.addColorStop(6 / 6, '#ff0000');
-    this.hContext.fillStyle = gradient;
-    this.hContext.fillRect(0, 0, this.hCanvas.width, this.hCanvas.height);
+    this.hContext.clearRect(0, 0, this.hCanvas.width, this.hCanvas.height);
 
     // Draw the control point. To ensure visibility everywhere it is an alternating circle in white and black.
     const x = this.hCanvas.width / 2;
