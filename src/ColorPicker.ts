@@ -31,13 +31,13 @@ export class ColorPicker {
   private hsv: HSVColor;
 
   /**
-   * If a color on the black-grey-white spectrum is selected the hue becomes undefined. This field saves, the last valid
-   * hue state, to ensure that the hue value doesn't vanish.
+   * If a color on the black-grey-white spectrum is selected the hue becomes undefined. This field saves the last valid
+   * hue state to ensure that the hue value doesn't vanish.
    */
   private backUpHue;
 
   /**
-   * If the value is zero, the saturation becomes undefined. This field saves, the last valid saturation state, to
+   * If the value is zero, the saturation becomes undefined. This field saves the last valid saturation state to
    * ensure that the saturation value doesn't vanish.
    */
   private backUpSaturation;
@@ -221,7 +221,7 @@ export class ColorPicker {
   }
 
   /**
-   * Sets a new color for the color picker in HEX format. Theoretically all valid CSS color strings are can be read in
+   * Sets a new color for the color picker in HEX format. Theoretically all valid CSS color strings can be given
    * here, but for consistency with other function names we keep the name as is.
    */
   public setHEX(color: string) {
@@ -340,7 +340,7 @@ export class ColorPicker {
   }
 
   /**
-   * This function should be called everytime the color change. It triggers the callback and sets the color of the
+   * This function should be called everytime the color changes. It triggers the callback and sets the color of the
    * preview element.
    */
   private sendUpdate() {

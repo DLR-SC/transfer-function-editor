@@ -20,7 +20,7 @@
     "interpolation",
     "paraview"
   ],
-  "author": "DLR",
+  "author": "German Aerospace Center (DLR)",
   "license": "MIT",
   "dependencies": {
     "d3-color": "^3.1.0",
