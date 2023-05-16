@@ -1,6 +1,8 @@
 import {hsl as d3HSL} from 'd3-color';
 import {hsv as d3HSV, HSVColor} from 'd3-hsv';
 import {drawControlPoint} from './draw';
+import Container from './Container';
+import NumberInputField from './NumberInputField';
 
 /**
  * This creates a color picker component, that will be embedded in the given container. The color can be chosen with a
@@ -23,10 +25,7 @@ import {drawControlPoint} from './draw';
  *   });
  * ```
  */
-export class ColorPicker {
-  /** The root element, in which the color picker gets embedded. */
-  private container: HTMLElement;
-
+export class ColorPicker extends Container {
   /** This is the internal color state. We chose hsv as a fitting internal representation. */
   private hsv: HSVColor;
 
@@ -37,8 +36,8 @@ export class ColorPicker {
   private backUpHue;
 
   /**
-   * If the value is zero, the saturation becomes undefined. This field saves the last valid saturation state to
-   * ensure that the saturation value doesn't vanish.
+   * If the value is zero, the saturation becomes undefined. This field saves the last valid saturation state to ensure
+   * that the saturation value doesn't vanish.
    */
   private backUpSaturation;
 
@@ -64,14 +63,14 @@ export class ColorPicker {
   private callbacks: Map<number, ColorCallback> = new Map();
   private callbackCounter = 0;
 
-  /** All the HTMLElements for manual editing the hsv, rgb and hex values. */
+  /** All the inputs for manual editing the hsv, rgb and hex values. */
   private inputFields: {
-    h: HTMLInputElement;
-    s: HTMLInputElement;
-    v: HTMLInputElement;
-    r: HTMLInputElement;
-    g: HTMLInputElement;
-    b: HTMLInputElement;
+    h: NumberInputField;
+    s: NumberInputField;
+    v: NumberInputField;
+    r: NumberInputField;
+    g: NumberInputField;
+    b: NumberInputField;
     hex: HTMLInputElement;
   };
 
@@ -85,16 +84,7 @@ export class ColorPicker {
    * @param options   Can be used to configure the color picker. See {@link ColorPickerOptions}.
    */
   constructor(container: HTMLElement | string, options?: ColorPickerOptions) {
-    // Figure out which element we want to embed in.
-    if (container) {
-      if (typeof container === 'string') {
-        this.container = document.querySelector(container);
-      } else {
-        this.container = container;
-      }
-    } else {
-      throw 'No element given!';
-    }
+    super(container);
 
     // Set all defaults.
     const defaultOptions: ColorPickerOptions = {
@@ -118,8 +108,8 @@ export class ColorPicker {
     this.backUpSaturation = this.hsv.s;
 
     // Fill the given container with all the HTML and CSS that we need.
-    this.container.classList.add('tfe-color-picker');
-    this.container.innerHTML = `
+    this.parent.classList.add('tfe-color-picker');
+    this.parent.innerHTML = `
       <div class="tfe-color-picker-root">
         <div class="tfe-color-picker-sl-picker" style="width: ${this.CANVAS_SIZE}px; height: ${this.CANVAS_SIZE}px">
           <canvas class="tfe-color-picker-sl-picker-canvas" width="${this.CANVAS_SIZE}" height="${this.CANVAS_SIZE}" />
@@ -129,84 +119,86 @@ export class ColorPicker {
         </div>
         <form class="tfe-color-picker-input-root">
           <div class="tfe-color-preview" style="background: ${this.getHEX()}"></div>
-      
           <div></div>
+          <div class="tfe-color-picker-h-input"></div>
+          <div class="tfe-color-picker-s-input"></div>
+          <div class="tfe-color-picker-v-input"></div>
           <div></div>
-      
-          <label for="h">h:</label>
-          <input class="tfe-color-picker-h-input" name="h" type="number" min="0" max="360" step="1" value="${this.hsv.h.toFixed(
-            0
-          )}">
-      
-          <label for="s">s:</label>
-          <input class="tfe-color-picker-s-input" name="s" type="number" min="0" max="100" step="1" value="${(
-            this.hsv.s * 100
-          ).toFixed(0)}">
-      
-          <label for="v">v:</label>
-          <input class="tfe-color-picker-v-input" name="v" type="number" min="0" max="100" step="1" value="${(
-            this.hsv.v * 100
-          ).toFixed(0)}">
-      
+          <div class="tfe-color-picker-r-input"></div>
+          <div class="tfe-color-picker-g-input"></div>
+          <div class="tfe-color-picker-b-input"></div>
           <div></div>
-          <div></div>
-      
-          <label for="r">r:</label>
-          <input class="tfe-color-picker-r-input" name="r" type="number" min="0" max="255" step="1" value="${this.hsv
-            .rgb()
-            .r.toFixed(0)}">
-      
-          <label for="g">g:</label>
-          <input class="tfe-color-picker-g-input" name="g" type="number" min="0" max="255" step="1" value="${this.hsv
-            .rgb()
-            .g.toFixed(0)}">
-      
-          <label for="b">b:</label>
-          <input class="tfe-color-picker-b-input" name="b" type="number" min="0" max="255" step="1" value="${this.hsv
-            .rgb()
-            .b.toFixed(0)}">
-      
-          <div></div>
-          <div></div>
-      
-          <label for="hex">hex:</label>
-          <input class="tfe-color-picker-hex-input" name="hex" type="text" minlength="4" maxlength="7" value="${this.getHEX()}">
+          <label>hex:
+            <input class="tfe-color-picker-hex-input" name="hex" type="text" minlength="4" maxlength="7" value="${this.getHEX()}">
+          </label>
         </form>
       </div>
     `;
 
     // Prepare the canvas and context for the saturation and value picker.
-    this.svCanvas = this.container.querySelector<HTMLCanvasElement>('.tfe-color-picker-sl-picker-canvas');
+    this.svCanvas = this.parent.querySelector<HTMLCanvasElement>('.tfe-color-picker-sl-picker-canvas');
     this.svContext = this.svCanvas.getContext('2d', {alpha: false});
     this.drawSVPicker();
     this.addSVEventListener();
 
     // Prepare the canvas and context for the hue picker.
-    this.hCanvas = this.container.querySelector<HTMLCanvasElement>('.tfe-color-picker-h-picker-canvas');
+    this.hCanvas = this.parent.querySelector<HTMLCanvasElement>('.tfe-color-picker-h-picker-canvas');
     this.hCanvas.style.background = 'linear-gradient(#f00, #f0f, #00f, #0ff, #0f0, #ff0, #f00)';
 
     this.hContext = this.hCanvas.getContext('2d', {alpha: true});
     this.drawHPicker();
     this.addHEventListener();
 
-    // Initialize all text input fields.
+    // Get the preview element.
+    this.previewElement = this.parent.querySelector<HTMLDivElement>('.tfe-color-preview');
+
+    // Initialize all input fields.
     this.inputFields = {
-      h: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-h-input'),
-      s: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-s-input'),
-      v: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-v-input'),
-      r: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-r-input'),
-      g: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-g-input'),
-      b: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-b-input'),
-      hex: this.container.querySelector<HTMLInputElement>('.tfe-color-picker-hex-input'),
+      h: new NumberInputField(this.parent.querySelector<HTMLDivElement>('.tfe-color-picker-h-input'), {
+        label: 'h: ',
+        min: 0,
+        max: 360,
+        initialValue: this.hsv.h,
+      }),
+      s: new NumberInputField(this.parent.querySelector<HTMLDivElement>('.tfe-color-picker-s-input'), {
+        label: 's: ',
+        min: 0,
+        max: 100,
+        initialValue: this.hsv.s * 100,
+      }),
+      v: new NumberInputField(this.parent.querySelector<HTMLDivElement>('.tfe-color-picker-v-input'), {
+        label: 'v: ',
+        min: 0,
+        max: 100,
+        initialValue: this.hsv.v * 100,
+      }),
+
+      r: new NumberInputField(this.parent.querySelector<HTMLDivElement>('.tfe-color-picker-r-input'), {
+        label: 'r: ',
+        min: 0,
+        max: 255,
+        initialValue: this.hsv.rgb().r,
+      }),
+      g: new NumberInputField(this.parent.querySelector<HTMLDivElement>('.tfe-color-picker-g-input'), {
+        label: 'g: ',
+        min: 0,
+        max: 255,
+        initialValue: this.hsv.rgb().g,
+      }),
+      b: new NumberInputField(this.parent.querySelector<HTMLDivElement>('.tfe-color-picker-b-input'), {
+        label: 'b: ',
+        min: 0,
+        max: 255,
+        initialValue: this.hsv.rgb().b,
+      }),
+
+      hex: this.parent.querySelector<HTMLInputElement>('.tfe-color-picker-hex-input'),
     };
     this.addInputEventListeners();
-
-    // Get the preview element.
-    this.previewElement = this.container.querySelector<HTMLDivElement>('.tfe-color-preview');
   }
 
   /**
-   * Register a callback that gets called, when a new color is picked.
+   * Register a callback that gets called, when a new color is picked. The callback gets called once immediately.
    *
    * @param callback The function that gets called whenever the color changes.
    */
@@ -483,7 +475,7 @@ export class ColorPicker {
 
       // Update other relevant components.
       this.drawAll();
-      this.inputFields.h.valueAsNumber = Math.round(this.hsv.h);
+      this.inputFields.h.setValue(this.hsv.h);
       this.updateRGBInputFields();
       this.updateHEXInputField();
     };
@@ -515,318 +507,86 @@ export class ColorPicker {
     });
   }
 
-  /**
-   * This function clamps numbers inside a number input field to a given range and returns the number or null if it is
-   * not valid.
-   */
-  private validateInput(element: HTMLInputElement, min: number, max: number): number | null {
-    if (element.valueAsNumber < min) {
-      element.valueAsNumber = min;
-    } else if (element.valueAsNumber > max) {
-      element.valueAsNumber = max;
-    }
-
-    return Number.isFinite(element.valueAsNumber) ? element.valueAsNumber : null;
-  }
-
-  /** This function validates the content of a number input, once it gets submitted or the focus is lost. */
-  private validateFinalInput(element: HTMLInputElement, min: number, max: number): number | null {
-    const value = this.validateInput(element, min, max);
-    if (value === null) {
-      element.valueAsNumber = min;
-      return min;
-    }
-    return null;
-  }
-
   /** Adds all the listeners to the text input fields. It also adds validation, so the values are always valid. */
   private addInputEventListeners() {
-    this.setupHSVListeners();
-    this.setupRGBListeners();
+    this.setupNumberInputListeners();
     this.setupHEXListeners();
   }
 
-  /** Sets up all listeners for the HSV input fields. */
-  private setupHSVListeners() {
+  /** Sets up all listeners for the HSV and RGB input fields. */
+  private setupNumberInputListeners() {
+    // Serves to prevent cyclic updates.
+    let updateInProgress = false;
+
     const onHSVUpdate = () => {
-      this.sendUpdate();
-      this.drawAll();
-      this.updateRGBInputFields();
-      this.updateHEXInputField();
+      if (!updateInProgress) {
+        updateInProgress = true;
+        this.sendUpdate();
+        this.drawAll();
+        this.updateRGBInputFields();
+        this.updateHEXInputField();
+        updateInProgress = false;
+      }
     };
 
-    // Setup hue listeners ---------------------------------------------------------------------------------------------
+    const onRGBUpdate = (r, g, b) => {
+      if (!updateInProgress) {
+        updateInProgress = true;
+        this.hsv = d3HSV(`rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`);
+        this.validateHueAndSaturation();
+        this.sendUpdate();
+        this.drawAll();
+        this.updateHSVInputFields();
+        this.updateHEXInputField();
+        updateInProgress = false;
+      }
+    };
 
-    const onHueUpdate = (value) => {
-      if (value !== null) {
+    // hsv
+
+    this.inputFields.h.addListener((value) => {
+      if (value !== this.hsv.h) {
         this.hsv.h = value;
         this.backUpHue = value;
         onHSVUpdate();
       }
-    };
-
-    this.inputFields.h.addEventListener('input', (ev: InputEvent) => {
-      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 360);
-      onHueUpdate(value);
     });
 
-    this.inputFields.h.addEventListener('wheel', (ev: WheelEvent) => {
-      ev.preventDefault();
-
-      let value = Math.round(this.hsv.h);
-      if (ev.deltaY > 0) {
-        // Decrement
-        value = clamp(value - 1, 0, 360);
-      } else if (ev.deltaY < 0) {
-        // Increment
-        value = clamp(value + 1, 0, 360);
-      }
-
-      onHueUpdate(value);
-      this.inputFields.h.valueAsNumber = value;
-    });
-
-    const validateHField = (ev: Event) => {
-      const el = ev.currentTarget as HTMLInputElement;
-      const value = this.validateFinalInput(el, 0, 360);
-      onHueUpdate(value);
-    };
-
-    this.inputFields.h.addEventListener('focusout', validateHField);
-    this.inputFields.h.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
-        validateHField(ev);
-      }
-    });
-
-    // Setup saturation listeners --------------------------------------------------------------------------------------
-
-    const onSaturationUpdate = (value) => {
-      if (value !== null) {
+    this.inputFields.s.addListener((value) => {
+      if (value !== this.hsv.s) {
         this.hsv.s = value / 100;
         this.backUpSaturation = this.hsv.s;
         onHSVUpdate();
       }
-    };
-
-    this.inputFields.s.addEventListener('input', (ev: InputEvent) => {
-      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 100);
-      onSaturationUpdate(value);
     });
 
-    this.inputFields.s.addEventListener('wheel', (ev: WheelEvent) => {
-      ev.preventDefault();
-
-      let value = Math.round(this.hsv.s * 100);
-      if (ev.deltaY > 0) {
-        // Decrement
-        value = clamp(value - 1, 0, 100);
-      } else if (ev.deltaY < 0) {
-        // Increment
-        value = clamp(value + 1, 0, 100);
-      }
-
-      onSaturationUpdate(value);
-      this.inputFields.s.valueAsNumber = value;
-    });
-
-    const validateSField = (ev: Event) => {
-      const el = ev.currentTarget as HTMLInputElement;
-      const value = this.validateFinalInput(el, 0, 100);
-      onSaturationUpdate(value);
-    };
-
-    this.inputFields.s.addEventListener('focusout', validateSField);
-    this.inputFields.s.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
-        validateSField(ev);
-      }
-    });
-
-    // Setup value listeners -------------------------------------------------------------------------------------------
-
-    const onValueUpdate = (value) => {
-      if (value !== null) {
+    this.inputFields.v.addListener((value) => {
+      if (value !== this.hsv.v) {
         this.hsv.v = value / 100;
         onHSVUpdate();
       }
-    };
-
-    this.inputFields.v.addEventListener('input', (ev: InputEvent) => {
-      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 100);
-      onValueUpdate(value);
     });
 
-    this.inputFields.v.addEventListener('wheel', (ev: WheelEvent) => {
-      ev.preventDefault();
+    // rgb
 
-      let value = Math.round(this.hsv.v * 100);
-      if (ev.deltaY > 0) {
-        // Decrement
-        value = clamp(value - 1, 0, 100);
-      } else if (ev.deltaY < 0) {
-        // Increment
-        value = clamp(value + 1, 0, 100);
-      }
-
-      onValueUpdate(value);
-      this.inputFields.v.valueAsNumber = value;
-    });
-
-    const validateVField = (ev: Event) => {
-      const el = ev.currentTarget as HTMLInputElement;
-      const value = this.validateFinalInput(el, 0, 100);
-      onValueUpdate(value);
-    };
-
-    this.inputFields.v.addEventListener('focusout', validateVField);
-    this.inputFields.v.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
-        validateVField(ev);
-      }
-    });
-  }
-
-  /** Sets up all listeners for the RGB input fields. */
-  private setupRGBListeners() {
-    const onRGBUpdate = (r, g, b) => {
-      this.hsv = d3HSV(`rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`);
-      this.validateHueAndSaturation();
-      this.sendUpdate();
-      this.drawAll();
-      this.updateHSVInputFields();
-      this.updateHEXInputField();
-    };
-
-    // Setup red listeners ---------------------------------------------------------------------------------------------
-
-    const onRedUpdate = (value) => {
-      if (value !== null) {
-        const oldRGB = this.hsv.rgb();
+    this.inputFields.r.addListener((value) => {
+      const oldRGB = this.hsv.rgb();
+      if (value !== oldRGB.r) {
         onRGBUpdate(value, oldRGB.g, oldRGB.b);
       }
-    };
-
-    this.inputFields.r.addEventListener('input', (ev: InputEvent) => {
-      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
-      onRedUpdate(value);
     });
 
-    this.inputFields.r.addEventListener('wheel', (ev: WheelEvent) => {
-      ev.preventDefault();
-
+    this.inputFields.g.addListener((value) => {
       const oldRGB = this.hsv.rgb();
-      let value = oldRGB.r;
-      if (ev.deltaY > 0) {
-        // Decrement
-        value = clamp(value - 1, 0, 255);
-      } else if (ev.deltaY < 0) {
-        // Increment
-        value = clamp(value + 1, 0, 255);
-      }
-
-      onRedUpdate(value);
-      this.inputFields.r.valueAsNumber = Math.round(value);
-    });
-
-    const validateRField = (ev: Event) => {
-      const el = ev.currentTarget as HTMLInputElement;
-      const value = this.validateFinalInput(el, 0, 255);
-      onRedUpdate(value);
-    };
-
-    this.inputFields.r.addEventListener('focusout', validateRField);
-    this.inputFields.r.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
-        validateRField(ev);
-      }
-    });
-
-    // Setup green listeners -------------------------------------------------------------------------------------------
-
-    const onGreenUpdate = (value) => {
-      if (value !== null) {
-        const oldRGB = this.hsv.rgb();
+      if (value !== oldRGB.g) {
         onRGBUpdate(oldRGB.r, value, oldRGB.b);
       }
-    };
-
-    this.inputFields.g.addEventListener('input', (ev: InputEvent) => {
-      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
-      onGreenUpdate(value);
     });
 
-    this.inputFields.g.addEventListener('wheel', (ev: WheelEvent) => {
-      ev.preventDefault();
-
+    this.inputFields.b.addListener((value) => {
       const oldRGB = this.hsv.rgb();
-      let value = oldRGB.g;
-      if (ev.deltaY > 0) {
-        // Decrement
-        value = clamp(value - 1, 0, 255);
-      } else if (ev.deltaY < 0) {
-        // Increment
-        value = clamp(value + 1, 0, 255);
-      }
-
-      onGreenUpdate(value);
-      this.inputFields.g.valueAsNumber = Math.round(value);
-    });
-
-    const validateGField = (ev: Event) => {
-      const el = ev.currentTarget as HTMLInputElement;
-      const value = this.validateFinalInput(el, 0, 255);
-      onGreenUpdate(value);
-    };
-
-    this.inputFields.g.addEventListener('focusout', validateGField);
-    this.inputFields.g.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
-        validateGField(ev);
-      }
-    });
-
-    // Setup blue listeners --------------------------------------------------------------------------------------------
-
-    const onBlueUpdate = (value) => {
-      if (value !== null) {
-        const oldRGB = this.hsv.rgb();
+      if (value !== oldRGB.b) {
         onRGBUpdate(oldRGB.r, oldRGB.g, value);
-      }
-    };
-
-    this.inputFields.b.addEventListener('input', (ev: InputEvent) => {
-      const value = this.validateInput(ev.currentTarget as HTMLInputElement, 0, 255);
-      onBlueUpdate(value);
-    });
-
-    this.inputFields.b.addEventListener('wheel', (ev: WheelEvent) => {
-      ev.preventDefault();
-
-      const oldRGB = this.hsv.rgb();
-      let value = oldRGB.b;
-      if (ev.deltaY > 0) {
-        // Decrement
-        value = clamp(value - 1, 0, 255);
-      } else if (ev.deltaY < 0) {
-        // Increment
-        value = clamp(value + 1, 0, 255);
-      }
-
-      onBlueUpdate(value);
-      this.inputFields.b.valueAsNumber = Math.round(value);
-    });
-
-    const validateBField = (ev: Event) => {
-      const el = ev.currentTarget as HTMLInputElement;
-      const value = this.validateFinalInput(el, 0, 255);
-      onBlueUpdate(value);
-    };
-
-    this.inputFields.b.addEventListener('focusout', validateBField);
-    this.inputFields.b.addEventListener('keypress', (ev: KeyboardEvent) => {
-      if (ev.key === 'Enter') {
-        validateBField(ev);
       }
     });
   }
@@ -868,17 +628,17 @@ export class ColorPicker {
 
   /** Updates the text inside the hsv input fields. */
   private updateHSVInputFields() {
-    this.inputFields.h.valueAsNumber = clamp(Math.round(this.hsv.h), 0, 360);
-    this.inputFields.s.valueAsNumber = clamp(Math.round(this.hsv.s * 100), 0, 100);
-    this.inputFields.v.valueAsNumber = clamp(Math.round(this.hsv.v * 100), 0, 100);
+    this.inputFields.h.setValue(this.hsv.h);
+    this.inputFields.s.setValue(this.hsv.s * 100);
+    this.inputFields.v.setValue(this.hsv.v * 100);
   }
 
   /** Updates the text inside the rgb input fields. */
   private updateRGBInputFields() {
     const rgb = this.hsv.rgb();
-    this.inputFields.r.valueAsNumber = clamp(Math.round(rgb.r), 0, 255);
-    this.inputFields.g.valueAsNumber = clamp(Math.round(rgb.g), 0, 255);
-    this.inputFields.b.valueAsNumber = clamp(Math.round(rgb.b), 0, 255);
+    this.inputFields.r.setValue(rgb.r);
+    this.inputFields.g.setValue(rgb.g);
+    this.inputFields.b.setValue(rgb.b);
   }
 
   /** Updates the text inside the hex input field. */
@@ -970,20 +730,18 @@ if (document.head.querySelector('#tfe-color-picker-style') === null) {
       }
     
       .tfe-color-picker-input-root {
-        display: grid;
-        grid-template-columns: 36px 60px;
-        grid-template-rows: repeat(3, auto) 20px repeat(3, auto) 20px auto;
-        grid-column-gap: 6px;
-        grid-row-gap: 6px;
-        align-items: center;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: space-between;
         align-content: space-evenly;
         margin-left: 12px;
         margin-bottom: 0;
       }
     
       .tfe-color-preview {
-        grid-column: 1 / span 2;
         height: 50px;
+        width: 100%;
         border: 1px solid grey;
         border-radius: 25px;
       }
@@ -992,7 +750,8 @@ if (document.head.querySelector('#tfe-color-picker-style') === null) {
         text-align: right;
       }
     
-      .tfe-color-picker-input-root > input {
+      .tfe-color-picker-input-root input {
+        width: 60px;
         text-align: right;
         font-family: monospace;
       }

@@ -107,7 +107,8 @@ export class TransferFunctionEditor {
   }
 
   /**
-   * Register a callback that gets called, when the transfer function changes.
+   * Register a callback that gets called, when the transfer function changes. The callback gets called once
+   * immediately.
    *
    * @param callback The function that gets called whenever the transfer function changes.
    */

@@ -4,6 +4,7 @@ import objectAssignDeep from 'object-assign-deep';
 import {getColorFromColorMapAt, getColorMapBins} from './convert';
 import * as d3Color from 'd3-color';
 import {drawControlPoint} from './draw';
+import Container from './Container';
 
 /**
  * This creates a color map editor component, where the user can create a color gradient using stops and colors.
@@ -28,10 +29,7 @@ import {drawControlPoint} from './draw';
  *     // }
  *   });
  */
-export class ColorMapEditor {
-  /** The element, in which the color map editor gets embedded. */
-  private readonly container: HTMLElement;
-
+export class ColorMapEditor extends Container {
   /** This element lays out the canvas and all other controls. */
   private readonly rootElement: HTMLDivElement;
 
@@ -85,16 +83,7 @@ export class ColorMapEditor {
    * @param options   Can be used to configure the color map editor. See {@link ColorMapEditorOptions}.
    */
   constructor(container: HTMLElement | string, options?: ColorMapEditorOptions) {
-    // Figure out which element we want to embed in.
-    if (container) {
-      if (typeof container === 'string') {
-        this.container = document.querySelector(container);
-      } else {
-        this.container = container;
-      }
-    } else {
-      throw 'No element given!';
-    }
+    super(container);
 
     // Set all defaults.
     const defaultOptions: ColorMapEditorOptions = {
@@ -125,7 +114,7 @@ export class ColorMapEditor {
     this.bins = finalOptions.initialColorMap.bins;
     this.controlPointSize = finalOptions.controlPointSize;
 
-    this.container.classList.add('tfe-color-map-editor');
+    this.parent.classList.add('tfe-color-map-editor');
 
     // This contains the canvas and the controls.
     this.rootElement = document.createElement('div');
@@ -133,12 +122,12 @@ export class ColorMapEditor {
     this.rootElement.style.display = 'flex';
     this.rootElement.style.flexDirection = 'column';
     this.rootElement.style.gap = '5px';
-    this.container.appendChild(this.rootElement);
+    this.parent.appendChild(this.rootElement);
 
     // Prepare the canvas and the context.
     this.canvas = document.createElement('canvas');
-    this.canvas.width = this.container.clientWidth;
-    this.canvas.height = this.container.clientHeight;
+    this.canvas.width = this.parent.clientWidth;
+    this.canvas.height = this.parent.clientHeight;
 
     this.rootElement.appendChild(this.canvas);
     this.ctx = this.canvas.getContext('2d', {alpha: false});
@@ -152,7 +141,7 @@ export class ColorMapEditor {
     this.colorPickerContainer.style.border = '1px solid black';
     this.colorPickerContainer.style.visibility = 'hidden';
     this.colorPickerContainer.style.position = 'relative';
-    this.container.appendChild(this.colorPickerContainer);
+    this.parent.appendChild(this.colorPickerContainer);
     this.colorPicker = new ColorPicker(this.colorPickerContainer);
 
     this.setUpInputElements(finalOptions);
@@ -269,7 +258,7 @@ export class ColorMapEditor {
   }
 
   /**
-   * Register a callback that gets called, when the color map changes.
+   * Register a callback that gets called, when the color map changes. The callback gets called once immediately.
    *
    * @param callback The function that gets called whenever the color map changes.
    */
@@ -530,11 +519,11 @@ export class ColorMapEditor {
 
     // Ensures that the canvas gets redrawn when its size changes.
     const resizeObserver = new ResizeObserver(() => {
-      this.canvas.width = this.container.clientWidth;
-      this.canvas.height = this.container.clientHeight;
+      this.canvas.width = this.parent.clientWidth;
+      this.canvas.height = this.parent.clientHeight;
       this.draw();
     });
-    resizeObserver.observe(this.container);
+    resizeObserver.observe(this.parent);
   }
 
   /**

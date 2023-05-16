@@ -4,6 +4,7 @@ import * as d3Color from 'd3-color';
 import * as d3Interpolate from 'd3-interpolate';
 import objectAssignDeep from 'object-assign-deep';
 import {getColorFromColorMapAt} from './convert';
+import Container from './Container';
 
 /**
  * This creates an editor to create transparency mappings.
@@ -27,10 +28,7 @@ import {getColorFromColorMapAt} from './convert';
  *     // ]
  *   });
  */
-export class TransparencyEditor {
-  /** The element, in which the transparency editor gets embedded. */
-  private readonly container: HTMLElement;
-
+export class TransparencyEditor extends Container {
   /** The gradient and stops are painted in here. It also handles mouse input. */
   private readonly canvas: HTMLCanvasElement;
 
@@ -70,15 +68,7 @@ export class TransparencyEditor {
    * @param options   Can be used to configure the transparency editor. See {@link TransparencyEditorOptions}.
    */
   constructor(container: HTMLElement | string, options?: TransparencyEditorOptions) {
-    if (container) {
-      if (typeof container === 'string') {
-        this.container = document.querySelector(container);
-      } else {
-        this.container = container;
-      }
-    } else {
-      throw 'No element given!';
-    }
+    super(container);
 
     // Set all defaults.
     const defaultOption: TransparencyEditorOptions = {
@@ -111,13 +101,13 @@ export class TransparencyEditor {
     this.showAlphaGrid = finalOptions.showAlphaGrid;
     this.alphaGridSize = finalOptions.alphaGridSize;
 
-    this.container.classList.add('tfe-transparency-editor');
+    this.parent.classList.add('tfe-transparency-editor');
 
     this.canvas = document.createElement('canvas');
-    this.canvas.width = this.container.clientWidth;
-    this.canvas.height = this.container.clientHeight;
+    this.canvas.width = this.parent.clientWidth;
+    this.canvas.height = this.parent.clientHeight;
     this.canvas.style.imageRendering = 'pixelated';
-    this.container.appendChild(this.canvas);
+    this.parent.appendChild(this.canvas);
     this.ctx = this.canvas.getContext('2d');
     this.updateAlphaRange();
     this.draw();
@@ -125,7 +115,8 @@ export class TransparencyEditor {
   }
 
   /**
-   * Register a callback that gets called, when the transfer function changes.
+   * Register a callback that gets called, when the transfer function changes. The callback gets called once
+   * immediately.
    *
    * @param callback The function that gets called whenever the transfer function changes.
    */
@@ -397,11 +388,11 @@ export class TransparencyEditor {
 
     // Ensure, that when the container size changes we adjust the canvas size and redraw.
     const resizeObserver = new ResizeObserver(() => {
-      this.canvas.width = this.container.clientWidth;
-      this.canvas.height = this.container.clientHeight;
+      this.canvas.width = this.parent.clientWidth;
+      this.canvas.height = this.parent.clientHeight;
       this.draw();
     });
-    resizeObserver.observe(this.container);
+    resizeObserver.observe(this.parent);
   }
 }
 
