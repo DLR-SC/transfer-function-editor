@@ -35,7 +35,7 @@ export class TransparencyEditor extends Container {
   /** The context for the canvas for convenience. */
   private ctx: CanvasRenderingContext2D;
 
-  /** This is the transparency map, that everything revolves around. */
+  /** This is the transparency map, that everything revolves around. The stops are always sorted. */
   private alphaStops: Array<AlphaStop>;
 
   /**
@@ -94,6 +94,7 @@ export class TransparencyEditor extends Container {
     const finalOptions = objectAssignDeep(defaultOption, options);
 
     this.alphaStops = finalOptions.initialAlphaStops;
+    this.sortControlPoints();
     this.colorMap = finalOptions.initialColorMap;
 
     this.controlPointSize = finalOptions.controlPointSize;
@@ -191,6 +192,7 @@ export class TransparencyEditor extends Container {
   /** Replace the existing alpha stops with new ones. */
   public setAlphaStops(alphaStops: Array<AlphaStop>) {
     this.alphaStops = alphaStops;
+    this.sortControlPoints();
     this.updateAlphaRange();
     this.sendUpdate();
     this.draw();

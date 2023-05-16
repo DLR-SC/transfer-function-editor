@@ -39,7 +39,7 @@ export class ColorMapEditor extends Container {
   /** The context for the canvas for convenience. */
   private ctx: CanvasRenderingContext2D;
 
-  /** This is the color map that everything revolves around. */
+  /** This is the color map that everything revolves around. The stops are always sorted. */
   private colorStops: Array<ColorStop>;
 
   /** The used method of interpolation between two color stops. */
@@ -108,6 +108,7 @@ export class ColorMapEditor extends Container {
     const finalOptions = objectAssignDeep(defaultOptions, options);
 
     this.colorStops = finalOptions.initialColorMap.colorStops;
+    this.sortControlPoints();
     this.showStopNumbers = finalOptions.showStopNumbers;
     this.interpolationMethod = finalOptions.initialColorMap.interpolationMethod;
     this.discrete = finalOptions.initialColorMap.discrete;
@@ -155,6 +156,7 @@ export class ColorMapEditor extends Container {
   /** Set new color stops. */
   public setColorStops(colorStops: Array<ColorStop>) {
     this.colorStops = colorStops;
+    this.sortControlPoints();
     this.draw();
     this.sendUpdates();
   }
@@ -221,6 +223,7 @@ export class ColorMapEditor extends Container {
   /** Set a new color map. */
   public setColorMap(colorMap: ColorMap) {
     this.colorStops = colorMap.colorStops;
+    this.sortControlPoints();
     this.discrete = colorMap.discrete;
     this.bins = Math.max(colorMap.bins || 0, 0);
     this.interpolationMethod = colorMap.interpolationMethod;
@@ -277,6 +280,10 @@ export class ColorMapEditor extends Container {
   /** This function notifies all listeners to this color map editor. */
   private sendUpdates() {
     this.callbacks.forEach((value) => value(this));
+  }
+
+  private sortControlPoints() {
+    this.colorStops.sort((a, b) => a.stop - b.stop);
   }
 
   /** Draws the gradient and the control points. */
@@ -408,7 +415,7 @@ export class ColorMapEditor extends Container {
           );
           const stop = {stop: x, color};
           this.colorStops.push(stop);
-          this.colorStops.sort((a, b) => a.stop - b.stop);
+          this.sortControlPoints();
           this.draw();
           this.sendUpdates();
           checkDragStart(e);
