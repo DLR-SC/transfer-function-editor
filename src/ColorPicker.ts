@@ -129,7 +129,7 @@ export class ColorPicker extends Container {
           <div class="tfe-color-picker-b-input"></div>
           <div></div>
           <label>hex:
-            <input class="tfe-color-picker-hex-input" name="hex" type="text" minlength="4" maxlength="7" value="${this.getHEX()}">
+            <input class="tfe-color-picker-hex-input" type="text" minlength="4" maxlength="7" value="${this.getHEX()}">
           </label>
         </form>
       </div>
