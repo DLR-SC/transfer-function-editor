@@ -628,17 +628,17 @@ export class ColorPicker extends Container {
 
   /** Updates the text inside the hsv input fields. */
   private updateHSVInputFields() {
-    this.inputFields.h.setValue(this.hsv.h);
-    this.inputFields.s.setValue(this.hsv.s * 100);
-    this.inputFields.v.setValue(this.hsv.v * 100);
+    this.inputFields.h.setValue(this.hsv.h, false);
+    this.inputFields.s.setValue(this.hsv.s * 100, false);
+    this.inputFields.v.setValue(this.hsv.v * 100, false);
   }
 
   /** Updates the text inside the rgb input fields. */
   private updateRGBInputFields() {
     const rgb = this.hsv.rgb();
-    this.inputFields.r.setValue(rgb.r);
-    this.inputFields.g.setValue(rgb.g);
-    this.inputFields.b.setValue(rgb.b);
+    this.inputFields.r.setValue(rgb.r, false);
+    this.inputFields.g.setValue(rgb.g, false);
+    this.inputFields.b.setValue(rgb.b, false);
   }
 
   /** Updates the text inside the hex input field. */

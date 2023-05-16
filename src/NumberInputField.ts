@@ -110,8 +110,11 @@ export default class NumberInputField extends Container {
     return this.value;
   }
 
-  /** Sets a new value. The value might be modified to fulfill the min, max and integerOnly constraints. */
-  public setValue(value: number) {
+  /**
+   * Sets a new value. The value might be modified to fulfill the min, max and integerOnly constraints. By default, the
+   * observers will be notified as well. This can be suppressed with the second argument set to false.
+   */
+  public setValue(value: number, notifyObservers: boolean = true) {
     if (value === this.value) {
       return;
     }
@@ -126,9 +129,11 @@ export default class NumberInputField extends Container {
     this.value = this.integerOnly ? Math.round(tmp) : tmp;
     this.input.valueAsNumber = this.value;
 
-    this.callbacks.forEach((callback) => {
-      callback(this.value);
-    });
+    if (notifyObservers) {
+      this.callbacks.forEach((callback) => {
+        callback(this.value);
+      });
+    }
   }
 
   /**
