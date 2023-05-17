@@ -392,7 +392,7 @@ export class ColorMapEditor extends Container {
     //  - Starting dragging a control point, if one was pressed on with the left mouse button.
     //  - Adding a control point if the left mouse button was pressed anywhere else (also starts dragging the newly
     //    created point).
-    //  - Removing a control point on middle click.
+    //  - Removing a control point on right click.
     this.canvas.addEventListener('mousedown', (e) => {
       draggedBefore = false;
 
@@ -420,10 +420,10 @@ export class ColorMapEditor extends Container {
           this.sendUpdates();
           checkDragStart(e);
         }
-      } else if (e.button === 1) {
-        // Middle Mouse Button
+      } else if (e.button === 2) {
+        // Right Mouse Button
         e.preventDefault();
-        // If a control point was pressed on with the MMB it gets removed.
+        // If a control point was pressed on with the RMB it gets removed.
         for (let i = 1; i < this.colorStops.length - 1; i++) {
           const stop = this.colorStops[i];
           const dx = stop.stop * this.canvas.width - e.offsetX;
@@ -436,6 +436,12 @@ export class ColorMapEditor extends Container {
           }
         }
       }
+    });
+
+    this.canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
     });
 
     // This listener is responsible to stop the dragging action, once the mouse is lifted.

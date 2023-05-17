@@ -355,7 +355,7 @@ export class TransparencyEditor extends Container {
     //  - Starting dragging a control point, if one was pressed on with the left mouse button.
     //  - Adding a control point if the left mouse button was pressed anywhere else (also starts dragging the newly
     //    created point).
-    //  - Removing a control point on middle click.
+    //  - Removing a control point on right click.
     this.canvas.addEventListener('mousedown', (e) => {
       if (e.button === 0) {
         // Left click
@@ -371,11 +371,17 @@ export class TransparencyEditor extends Container {
         const {stop, alpha} = this.pixelToNormalized(e.offsetX, e.offsetY);
         this.addControlPoint(stop, alpha);
         checkDragStart(e);
-      } else if (e.button === 1) {
-        // Middle click
+      } else if (e.button === 2) {
+        // Right click
         e.preventDefault();
         this.removeControlPointAt(e.offsetX, e.offsetY);
       }
+    });
+
+    this.canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
     });
 
     // This listener is responsible to stop the dragging action, once the mouse is lifted.
