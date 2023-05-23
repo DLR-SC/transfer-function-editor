@@ -3,16 +3,31 @@ import * as d3Hsv from 'd3-hsv';
 import {ColorMap, ColorMapBin, InterpolationMethod} from './Types';
 import * as d3Scale from 'd3-scale';
 
+const colorRangeCache = new WeakMap<ColorMap, d3Scale.ScaleLinear<string, string>>();
+
 /**
- * This function returns a color for a value in the given color map.
+ * This utility function creates a color range method from d3 to the given color map. It also does some caching, since
+ * this is an expensive object to create.
  */
-export function getColorFromColorMapAt(colorMap: ColorMap, value: number): string {
+export function getColorRange(colorMap: ColorMap): d3Scale.ScaleLinear<string, string> {
+  if (colorRangeCache.has(colorMap)) {
+    return colorRangeCache.get(colorMap);
+  }
+
   const colorRange = d3Scale
     .scaleLinear<string, number>()
     .domain(colorMap.colorStops.map((entry) => entry.stop))
     .range(colorMap.colorStops.map((entry) => entry.color))
     .interpolate(getColorInterpolator(colorMap.interpolationMethod));
+  colorRangeCache.set(colorMap, colorRange);
+  return colorRange;
+}
 
+/**
+ * This function returns a color for a value in the given color map.
+ */
+export function getColorFromColorMapAt(colorMap: ColorMap, value: number): string {
+  const colorRange = getColorRange(colorMap);
   if (colorMap.discrete && colorMap.bins) {
     return colorRange(Math.floor(value * colorMap.bins) / (colorMap.bins - 1));
   }
@@ -34,12 +49,7 @@ export function getColorMapBins(colorMap: ColorMap): Array<ColorMapBin> {
   const range = max - min;
   const binSize = range / colorMap.bins;
 
-  const colorRange = d3Scale
-    .scaleLinear<string, number>()
-    .domain(colorMap.colorStops.map((entry) => entry.stop))
-    .range(colorMap.colorStops.map((entry) => entry.color))
-    .interpolate(getColorInterpolator(colorMap.interpolationMethod));
-
+  const colorRange = getColorRange(colorMap);
   const result: Array<ColorMapBin> = [];
 
   for (let i = 0; i < colorMap.bins; i++) {
