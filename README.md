@@ -1,11 +1,11 @@
-Example: https://dlr-sc.github.io/transfer-function-editor/
-
 ![Teaser](docs/images/Teaser.png)
 
 # Transfer Function Editor
 
 This library provides components for creating and modifying, colors, color maps, transparencies and transfer functions.
 It is based on d3 and requires no framework like React or Vue.js.
+
+Example: https://dlr-sc.github.io/transfer-function-editor/
 
 ## Components
 
