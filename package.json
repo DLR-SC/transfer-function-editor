@@ -1,0 +1,42 @@
+{
+  "name": "transfer-function-editor",
+  "version": "1.0.0",
+  "description": "A simple transfer function editor.",
+  "source": "src/index.ts",
+  "module": "dist/transfer-function-editor.modern.js",
+  "unpkg": "dist/transfer-function-editor.umd.js",
+  "amdName": "TransferFunctionEditor",
+  "scripts": {
+    "build": "microbundle build",
+    "watch": "microbundle watch",
+    "format": "prettier --write ./src"
+  },
+  "keywords": [
+    "transfer function",
+    "tf",
+    "transparency",
+    "color",
+    "d3",
+    "interpolation",
+    "paraview"
+  ],
+  "author": "German Aerospace Center (DLR)",
+  "license": "MIT",
+  "dependencies": {
+    "d3-color": "^3.1.0",
+    "d3-hsv": "^0.1.0",
+    "d3-interpolate": "^3.0.1",
+    "d3-scale": "^3.3.0",
+    "object-assign-deep": "^0.4.0"
+  },
+  "devDependencies": {
+    "@types/d3-color": "^3.1.0",
+    "@types/d3-hsv": "^0.1.4",
+    "@types/d3-interpolate": "^3.0.1",
+    "@types/d3-scale": "^3.3.2",
+    "microbundle": "^0.13.0",
+    "prettier": "^2.8.4",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.9.5"
+  }
+}
