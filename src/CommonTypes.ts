@@ -1,3 +1,37 @@
+export interface RGB {
+  r: number;
+  g: number;
+  b: number;
+}
+
+export interface HSL {
+  h: number;
+  s: number;
+  l: number;
+}
+
+export interface HSV {
+  h: number;
+  s: number;
+  v: number;
+}
+
+export interface Color {
+  rgb: RGB;
+  hsl: HSL;
+  hsv: HSV;
+  hex: string;
+}
+
+/** Combines transparency and color to create a transfer function. */
+export interface TransferFunction {
+  /** Defines the function of transparency. */
+  alphaStops: Array<AlphaStop>;
+
+  /** Defines the function of color. */
+  colorMap: ColorMap;
+}
+
 /** A single entry for the transparency component of a transfer function. */
 export interface AlphaStop {
   /** The value at which the alpha value applies. */

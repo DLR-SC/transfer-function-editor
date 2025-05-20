@@ -1,7 +1,12 @@
+import {AlphaStop, ColorMap, ColorMapBin, InterpolationMethod} from '../CommonTypes';
+import * as d3Scale from 'd3-scale';
 import * as d3Interpolate from 'd3-interpolate';
 import * as d3Hsv from 'd3-hsv';
-import {ColorMap, ColorMapBin, InterpolationMethod} from './Types';
-import * as d3Scale from 'd3-scale';
+
+/** Simple utility to clamp a number between two values. */
+export function clamp(number: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, number));
+}
 
 const colorRangeCache = new WeakMap<ColorMap, d3Scale.ScaleLinear<string, string>>();
 
@@ -11,7 +16,7 @@ const colorRangeCache = new WeakMap<ColorMap, d3Scale.ScaleLinear<string, string
  */
 export function getColorRange(colorMap: ColorMap): d3Scale.ScaleLinear<string, string> {
   if (colorRangeCache.has(colorMap)) {
-    return colorRangeCache.get(colorMap);
+    return colorRangeCache.get(colorMap)!;
   }
 
   const colorRange = d3Scale
@@ -33,6 +38,27 @@ export function getColorFromColorMapAt(colorMap: ColorMap, value: number): strin
   }
 
   return colorRange(value);
+}
+
+
+const alphaRangeCache = new WeakMap<Array<AlphaStop>, d3Scale.ScaleLinear<number, number>>();
+
+/**
+ * This utility function creates an alpha range method from d3 to the alpha stops. It also does some caching, since
+ * this is an expensive object to create.
+ */
+export function getAlphaRange(alphaStops: Array<AlphaStop>): d3Scale.ScaleLinear<number, number> {
+  if (alphaRangeCache.has(alphaStops)) {
+    return alphaRangeCache.get(alphaStops)!;
+  }
+
+  const alphaRange = d3Scale
+    .scaleLinear<number, number>()
+    .domain(alphaStops.map((entry) => entry.stop))
+    .range(alphaStops.map((entry) => entry.alpha))
+    .interpolate(d3Interpolate.interpolateNumber);
+  alphaRangeCache.set(alphaStops, alphaRange);
+  return alphaRange;
 }
 
 /**
@@ -90,3 +116,5 @@ export function getColorInterpolator(interpolationMethods: InterpolationMethod) 
       return d3Interpolate.interpolateCubehelixLong;
   }
 }
+
+export type Constructor<T = {}> = new (...args: any[]) => T;

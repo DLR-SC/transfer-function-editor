@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>TransferFunctionEditor</title>
+  <script type="module" src="./index.ts"></script>
+  <style>
+      body {
+          text-align: center;
+          background: mintcream;
+          margin: 0;
+          padding: 0;
+          font-family: Arial, SansSerif, monospace;
+      }
+
+      h1 {
+          font-weight: normal;
+      }
+
+      hr {
+          width: 80%;
+          color: gray;
+          margin-top: 50px;
+          margin-bottom: 25px;
+      }
+
+      #root {
+          flex-direction: column;
+          flex: 1;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 5%;
+          display: flex;
+      }
+
+      .section {
+          width: 1200px;
+          min-height: 400px;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          display: flex;
+      }
+
+      .preview {
+          text-align: left;
+          max-height: 350px;
+          width: 500px;
+          color: wheat;
+          background: #2b2d30;
+          border: 2px solid gray;
+          padding: 10px;
+          overflow-y: auto;
+      }
+
+      #footer {
+          flex-direction: row;
+          justify-content: space-evenly;
+          margin: 6px 20%;
+          display: flex;
+      }
+
+  </style>
+</head>
+<body>
+<div id="root">
+  <h1>Transfer Function Editor</h1>
+  <div class="section">
+    <tfe-transfer-function-editor
+      width="500px" height="250px"
+      range="[-10, 10]"
+      alpha-stops='[{"stop": -10, "alpha": 0.2}, {"stop": 2, "alpha": 0.8}, {"stop": 10, "alpha": 0.5}]'
+      interpolation-method="CUBEHELIX"
+    ></tfe-transfer-function-editor>
+    <pre id="tfe-output" class="preview"></pre>
+  </div>
+  <hr>
+  <h1>Transparency Editor</h1>
+  <div class="section">
+    <tfe-transparency-editor
+      width="500px" height="200px"
+      range="[-10, 10]"
+      alpha-stops='[{"stop": -10, "alpha": 0.2}, {"stop": 0, "alpha": 0.4}, {"stop": 10, "alpha": 1}]'
+      color-stops-normalized='[{"stop": 0.5, "color": "lightcoral"}]'
+    ></tfe-transparency-editor>
+    <pre id="te-output" class="preview"></pre>
+  </div>
+  <hr>
+  <h1>Color Map</h1>
+  <div class="section">
+    <tfe-color-map-editor
+      width="500px" height="40px"
+      show-stop-numbers
+      range="[-10, 10]"
+      color-stops='[{"stop": -10, "color": "blue"}, {"stop": 10, "color": "white"}]'
+      interpolation-method="LAB"
+    ></tfe-color-map-editor>
+    <pre id="cm-output" class="preview"></pre>
+  </div>
+  <hr>
+  <h1>Color Picker</h1>
+  <div class="section">
+    <tfe-color-picker hex="lightcoral"></tfe-color-picker>
+    <pre id="cp-output" class="preview"></pre>
+  </div>
+</div>
+<footer>
+  <div id="footer">
+    <div>Author: German Aerospace Center (DLR)</div>
+    <div><a href="https://www.dlr.de/service/impressum.html">Imprint</a></div>
+  </div>
+</footer>
+</body>
+</html>
