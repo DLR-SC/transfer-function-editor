@@ -1,7 +1,7 @@
 {
   "name": "transfer-function-editor",
   "description": "A simple transfer function editor.",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "types": "./dist/types/index.d.ts",
   "exports": {
@@ -19,6 +19,7 @@
   },
   "scripts": {
     "dev": "vite --config vite.config.js serve demo",
+    "build:demo": "vite build demo --outDir ../dist-demo --emptyOutDir",
     "build": "vite build",
     "preview": "vite preview",
     "format": "prettier --write ./src"
@@ -30,7 +31,8 @@
     "color",
     "d3",
     "interpolation",
-    "paraview"
+    "web components",
+    "lit"
   ],
   "author": "German Aerospace Center (DLR)",
   "license": "MIT",
