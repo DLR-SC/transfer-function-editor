@@ -36,7 +36,7 @@ export class NumberInput extends LitElement {
   /** The actual number. This always contains a value. */
   @property({type: Number})
   set value(value: number) {
-    value = this.integerOnly ? Math.round(value) : value
+    value = this.integerOnly ? Math.round(value) : value;
     if (value === this._value) {
       return;
     }
@@ -89,7 +89,6 @@ export class NumberInput extends LitElement {
         @keypress=${this.onKeyPress}
         @mousedown=${this.onMouseDown}
         style="cursor: ${this.isDragging ? 'ew-resize' : 'text'}"
-
       />
     `;
 
@@ -118,12 +117,12 @@ export class NumberInput extends LitElement {
     this.abortController = new AbortController();
 
     document.addEventListener('mousemove', this.onMouseMove.bind(this), {
-      signal: this.abortController.signal
+      signal: this.abortController.signal,
     });
 
     document.addEventListener('mouseup', this.onMouseUp.bind(this), {
       once: true,
-      signal: this.abortController.signal
+      signal: this.abortController.signal,
     });
 
     this.lastX = ev.clientX;
@@ -169,7 +168,6 @@ export class NumberInput extends LitElement {
 
     this.isDragging = false;
   }
-
 
   private onWheel(ev: WheelEvent) {
     if (this.disabled) return;

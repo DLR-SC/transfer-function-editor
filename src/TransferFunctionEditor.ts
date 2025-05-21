@@ -27,20 +27,21 @@ export class TransferFunctionEditor extends TransferFunctionMixin(LitElement, [
           .colorMapNormalized="${this.colorMapNormalized}"
           .range=${this.range}
           .width=${this.width}
-          .height='calc(0.85 * ${this.height})'
+          .height="calc(0.85 * ${this.height})"
+          .controlPointSize=${this.controlPointSize}
+          .disableAlphaGrid=${this.disableAlphaGrid}
+          .alphaGridSize=${this.alphaGridSize}
           @change=${(ev: CustomEvent<TransparencyEditor>) => {
             this.alphaStopsNormalized = ev.detail.alphaStopsNormalized;
           }}
         ></tfe-transparency-editor>
-        <tfe-color-map-editor
-          .colorMapNormalized="${this.colorMapNormalized}"
-          .range=${this.range}
-          show-stop-numbers
-          .width=${this.width}
-          .height='calc(0.15 * ${this.height})'
-          @change=${(ev: CustomEvent<ColorMapEditor>) => {
-            this.colorMapNormalized = ev.detail.colorMapNormalized;
-          }}
+        <tfe-color-map-editor .colorMapNormalized="${this.colorMapNormalized}" .range=${this.range} .width=${this.width}
+        .height='calc(0.15 * ${this.height})' .controlPointSize=${this.controlPointSize}
+        .showStopNumbers=${this.showStopNumbers} .interpolationMethodsEditable=${this.interpolationMethodsEditable}
+        .binSelectorEditable=${this.binSelectorEditable}
+        @change=${(ev: CustomEvent<ColorMapEditor>) => {
+          this.colorMapNormalized = ev.detail.colorMapNormalized;
+        }}
       </div>
     `;
   }

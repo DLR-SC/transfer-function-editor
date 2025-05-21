@@ -83,7 +83,7 @@ export class ColorMapEditor extends ColorMapMixin(LitElement) {
                         ?checked=${this.discrete}
                         @change=${(ev: Event) => {
                           ev.stopPropagation();
-                          return this.discrete = (ev.target as HTMLInputElement).checked;
+                          return (this.discrete = (ev.target as HTMLInputElement).checked);
                         }}
                       />
                     </label>
@@ -97,7 +97,7 @@ export class ColorMapEditor extends ColorMapMixin(LitElement) {
                         ?disabled=${!this.discrete}
                         @change=${(ev: CustomEvent<number>) => {
                           ev.stopPropagation();
-                          return this.bins = ev.detail;
+                          return (this.bins = ev.detail);
                         }}
                       >
                       </tfe-number-input>

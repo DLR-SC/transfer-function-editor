@@ -71,6 +71,9 @@
       range="[-10, 10]"
       alpha-stops='[{"stop": -10, "alpha": 0.2}, {"stop": 2, "alpha": 0.8}, {"stop": 10, "alpha": 0.5}]'
       interpolation-method="CUBEHELIX"
+      interpolation-methods-editable
+      bin-selector-editable
+      show-stop-numbers
     ></tfe-transfer-function-editor>
     <pre id="tfe-output" class="preview"></pre>
   </div>
@@ -90,10 +93,12 @@
   <div class="section">
     <tfe-color-map-editor
       width="500px" height="40px"
-      show-stop-numbers
       range="[-10, 10]"
       color-stops='[{"stop": -10, "color": "blue"}, {"stop": 10, "color": "white"}]'
       interpolation-method="LAB"
+      interpolation-methods-editable
+      bin-selector-editable
+      show-stop-numbers
     ></tfe-color-map-editor>
     <pre id="cm-output" class="preview"></pre>
   </div>

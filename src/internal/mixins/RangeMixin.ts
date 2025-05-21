@@ -13,4 +13,4 @@ export const RangeMixin = <TBase extends Constructor<LitElement>>(base: TBase) =
   }
 
   return RangeMixinClass as Constructor<RangeMixinInterface> & TBase;
-}
+};

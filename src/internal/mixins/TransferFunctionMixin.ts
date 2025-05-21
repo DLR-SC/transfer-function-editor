@@ -3,17 +3,18 @@ import {Constructor} from '../util';
 import {RangeMixin, RangeMixinInterface} from './RangeMixin';
 import {ColorMapMixin, ColorMapMixinInterface} from './ColorMapMixin';
 import {AlphaMapMixin, AlphaMapMixinInterface} from './AlphaMapMixin';
-import {ColorStop, TransferFunction} from '../../CommonTypes';
+import {AlphaMapBin, ColorMapBin, ColorStop, TransferFunction} from '../../CommonTypes';
 import * as d3Color from 'd3-color';
 
 export declare class TransferFunctionMixinInterface {
+  get transferFunction(): TransferFunction;
   get transferFunctionNormalized(): TransferFunction;
 
-  get transferFunction(): TransferFunction;
+  public sampleAlphaColor(samples: number): Array<ColorMapBin & AlphaMapBin>;
+  public sampleAlphaColorNormalized(samples: number): Array<ColorMapBin & AlphaMapBin>;
 
-  rgba(stop: number): string;
-
-  rgbaNormalized(stop: number): string;
+  alphaColor(stop: number): string;
+  alphaColorNormalized(stop: number): string;
 }
 
 export const TransferFunctionMixin = <TBase extends Constructor<LitElement>>(
@@ -22,28 +23,44 @@ export const TransferFunctionMixin = <TBase extends Constructor<LitElement>>(
     {stop: 0, color: 'black'},
     {stop: 1, color: 'black'},
   ]
-)=> {
+) => {
   class TransferFunctionMixinClass extends AlphaMapMixin(ColorMapMixin(RangeMixin(base), defaultColorStops)) {
-    /** Returns the complete transfer function including the alpha values and the color map. */
     get transferFunctionNormalized(): TransferFunction {
       return {alphaStops: this.alphaStopsNormalized, colorMap: this.colorMapNormalized};
     }
 
-    /** Returns the complete transfer function including the alpha values and the color map. */
     get transferFunction(): TransferFunction {
       return {alphaStops: this.alphaStops, colorMap: this.colorMap};
     }
 
-    /** Returns the color, including transparency, at the given stop. */
-    public rgba(stop: number): string {
-      const color = d3Color.rgb(this.rgb(stop));
+    public sampleAlphaColor(samples: number): Array<ColorMapBin & AlphaMapBin> {
+      const colors = this.sampleColor(samples);
+      const alphas = this.sampleAlpha(samples);
+
+      return colors.map((color, i) => ({
+        ...color,
+        alpha: alphas[i].alpha,
+      }));
+    }
+
+    public sampleAlphaColorNormalized(samples: number): Array<ColorMapBin & AlphaMapBin> {
+      const colors = this.sampleColorNormalized(samples);
+      const alphas = this.sampleAlphaNormalized(samples);
+
+      return colors.map((color, i) => ({
+        ...color,
+        alpha: alphas[i].alpha,
+      }));
+    }
+
+    public alphaColor(stop: number): string {
+      const color = d3Color.rgb(this.color(stop));
       color.opacity = this.alpha(stop);
       return color.formatHex8();
     }
 
-    /** Returns the color, including transparency, at the given stop. */
-    public rgbaNormalized(stop: number): string {
-      const color = d3Color.rgb(this.rgbNormalized(stop));
+    public alphaColorNormalized(stop: number): string {
+      const color = d3Color.rgb(this.colorNormalized(stop));
       color.opacity = this.alphaNormalized(stop);
       return color.formatHex8();
     }
@@ -54,4 +71,4 @@ export const TransferFunctionMixin = <TBase extends Constructor<LitElement>>(
     Constructor<ColorMapMixinInterface> &
     Constructor<RangeMixinInterface> &
     TBase;
-}
+};

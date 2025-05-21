@@ -2,23 +2,27 @@ import {LitElement} from 'lit';
 import {property} from 'lit/decorators.js';
 import {ColorMap, ColorMapBin, ColorStop, InterpolationMethod} from '../../CommonTypes';
 import {RangeMixin, RangeMixinInterface} from './RangeMixin';
-import {Constructor, getColorFromColorMapAt, getColorMapBins} from '../util';
+import {Constructor, getColorFromColorMapAt, sampleColorMap} from '../util';
 
 export declare class ColorMapMixinInterface {
-  colorStopsNormalized: Array<ColorStop>;
   colorStops: Array<ColorStop>;
+  colorStopsNormalized: Array<ColorStop>;
+
+  get discreteColorStops(): Array<ColorMapBin> | undefined;
+  get discreteColorStopsNormalized(): Array<ColorMapBin> | undefined;
+
   interpolationMethod: InterpolationMethod;
   discrete: boolean;
   bins: number;
 
-  colorMapNormalized: ColorMap;
   colorMap: ColorMap;
+  colorMapNormalized: ColorMap;
 
-  rgb(stop: number): string;
-  rgbNormalized(stop: number): string;
+  color(stop: number): string;
+  colorNormalized(stop: number): string;
 
-  get discreteColorMapNormalized(): Array<ColorMapBin>;
-  get discreteColorMap(): Array<ColorMapBin>;
+  public sampleColor(samples: number): Array<ColorMapBin>;
+  public sampleColorNormalized(samples: number): Array<ColorMapBin>;
 
   showStopNumbers: boolean;
   interpolationMethodsEditable: boolean;
@@ -32,7 +36,7 @@ export const ColorMapMixin = <TBase extends Constructor<LitElement>>(
     {stop: 0.5, color: 'yellow'},
     {stop: 1, color: 'red'},
   ]
-)=> {
+) => {
   class ColorMapMixinClass extends RangeMixin(base) {
     @property({type: Array, attribute: 'color-stops-normalized'})
     colorStopsNormalized: Array<ColorStop> = defaultColorStops;
@@ -57,6 +61,7 @@ export const ColorMapMixin = <TBase extends Constructor<LitElement>>(
       return {
         colorStops: this.colorStopsNormalized,
         interpolationMethod: this.interpolationMethod,
+        discreteColorStops: this.discreteColorStopsNormalized,
         discrete: this.discrete || undefined,
         bins: this.discrete ? this.bins : undefined,
       };
@@ -65,14 +70,15 @@ export const ColorMapMixin = <TBase extends Constructor<LitElement>>(
     set colorMapNormalized(value: ColorMap) {
       this.colorStopsNormalized = value.colorStops;
       this.interpolationMethod = value.interpolationMethod;
-      this.discrete = value.discrete || false;
-      this.bins = value.bins || 7;
+      this.discrete = value.discrete ?? false;
+      this.bins = value.bins ?? 7;
     }
 
     @property({type: Object, attribute: 'color-map'})
     get colorMap(): ColorMap {
       return {
         colorStops: this.colorStops,
+        discreteColorStops: this.discreteColorStops,
         interpolationMethod: this.interpolationMethod,
         discrete: this.discrete || undefined,
         bins: this.discrete ? this.bins : undefined,
@@ -82,24 +88,31 @@ export const ColorMapMixin = <TBase extends Constructor<LitElement>>(
     set colorMap(value: ColorMap) {
       this.colorStops = value.colorStops;
       this.interpolationMethod = value.interpolationMethod;
-      this.discrete = value.discrete || false;
-      this.bins = value.bins || 7;
+      this.discrete = value.discrete ?? false;
+      this.bins = value.bins ?? 7;
     }
 
-    public rgb(stop: number): string {
+    public color(stop: number): string {
       return getColorFromColorMapAt(this.colorMap, stop - this.range[0] / (this.range[1] - this.range[0]));
     }
 
-    public rgbNormalized(stop: number): string {
+    public colorNormalized(stop: number): string {
       return getColorFromColorMapAt(this.colorMapNormalized, stop);
     }
 
-    get discreteColorMapNormalized(): Array<ColorMapBin> {
-      return getColorMapBins(this.colorMapNormalized);
+    get discreteColorStops(): Array<ColorMapBin> | undefined {
+      return this.discrete ? this.sampleColor(this.bins) : undefined;
+    }
+    get discreteColorStopsNormalized(): Array<ColorMapBin> | undefined {
+      return this.discrete ? this.sampleColorNormalized(this.bins) : undefined;
     }
 
-    get discreteColorMap(): Array<ColorMapBin> {
-      return getColorMapBins(this.colorMap);
+    public sampleColor(samples: number): Array<ColorMapBin> {
+      return sampleColorMap(this.colorStops, this.interpolationMethod, samples);
+    }
+
+    public sampleColorNormalized(samples: number): Array<ColorMapBin> {
+      return sampleColorMap(this.colorStopsNormalized, this.interpolationMethod, samples);
     }
 
     @property({type: String, attribute: 'interpolation-method'})
@@ -115,11 +128,11 @@ export const ColorMapMixin = <TBase extends Constructor<LitElement>>(
     showStopNumbers: boolean = false;
 
     @property({type: Boolean, attribute: 'interpolation-methods-editable'})
-    interpolationMethodsEditable: boolean = true;
+    interpolationMethodsEditable: boolean = false;
 
     @property({type: Boolean, attribute: 'bin-selector-editable'})
-    binSelectorEditable: boolean = true;
+    binSelectorEditable: boolean = false;
   }
 
   return ColorMapMixinClass as Constructor<ColorMapMixinInterface> & Constructor<RangeMixinInterface> & TBase;
-}
+};

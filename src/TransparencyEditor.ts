@@ -84,7 +84,7 @@ export class TransparencyEditor extends TransferFunctionMixin(LitElement) {
     // Draw the color gradient.
     for (let i = 0; i < this.canvas.width; ++i) {
       const alpha = this.alphaNormalized(i / (this.canvas.width - 1));
-      context.fillStyle = this.rgbaNormalized(i / (this.canvas.width - 1));
+      context.fillStyle = this.alphaColorNormalized(i / (this.canvas.width - 1));
       context.fillRect(i, (1 - alpha) * this.canvas.height, 1, alpha * this.canvas.height);
 
       if (!this.disableAlphaGrid) {

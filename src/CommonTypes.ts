@@ -55,6 +55,8 @@ export interface ColorMap {
   /** The colors at the specified stops. */
   colorStops: Array<ColorStop>;
 
+  discreteColorStops?: Array<ColorMapBin>;
+
   /** The method on how the color between stops is being computed. */
   interpolationMethod: InterpolationMethod;
 
@@ -87,6 +89,21 @@ export interface ColorMapBin {
 
   /** The color that applies to the whole bin. */
   color: string;
+}
+
+/** For discrete alpha maps this defines a bin. */
+export interface AlphaMapBin {
+  /** The minimum value of this bin. */
+  lowerBound: number;
+
+  /** The middle value of the bin. */
+  center: number;
+
+  /** The maximum value of this bin. */
+  upperBound: number;
+
+  /** The alpha value that applies to the whole bin. */
+  alpha: number;
 }
 
 /** The methods of interpolation between color stops. See https://github.com/d3/d3-interpolate#color-spaces. */

@@ -1,16 +1,18 @@
 import {LitElement} from 'lit';
 import {property} from 'lit/decorators.js';
-import {AlphaStop} from '../../CommonTypes';
+import {AlphaMapBin, AlphaStop} from '../../CommonTypes';
 import {RangeMixin, RangeMixinInterface} from './RangeMixin';
-import {Constructor, getAlphaRange} from '../util';
+import {Constructor, getAlphaRange, sampleAlphaMap} from '../util';
 
 export declare class AlphaMapMixinInterface {
-  alphaStopsNormalized: Array<AlphaStop>;
   alphaStops: Array<AlphaStop>;
-
-  public alphaNormalized(stop: number): number;
+  alphaStopsNormalized: Array<AlphaStop>;
 
   public alpha(stop: number): number;
+  public alphaNormalized(stop: number): number;
+
+  public sampleAlpha(samples: number): Array<AlphaMapBin>;
+  public sampleAlphaNormalized(samples: number): Array<AlphaMapBin>;
 
   disableAlphaGrid: boolean;
   alphaGridSize: number;
@@ -46,6 +48,14 @@ export const AlphaMapMixin = <TBase extends Constructor<LitElement>>(base: TBase
 
     public alphaNormalized(stop: number): number {
       return getAlphaRange(this.alphaStopsNormalized)(stop);
+    }
+
+    public sampleAlpha(samples: number): Array<AlphaMapBin> {
+      return sampleAlphaMap(this.alphaStops, samples);
+    }
+
+    public sampleAlphaNormalized(samples: number): Array<AlphaMapBin> {
+      return sampleAlphaMap(this.alphaStopsNormalized, samples);
     }
 
     @property({type: Boolean, attribute: 'disable-alpha-grid'})

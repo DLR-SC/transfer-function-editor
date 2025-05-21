@@ -21,7 +21,7 @@
     "dev": "vite --config vite.config.js serve demo",
     "build": "vite build",
     "preview": "vite preview",
-    "format": "prettier --write ./lib"
+    "format": "prettier --write ./src"
   },
   "keywords": [
     "transfer function",

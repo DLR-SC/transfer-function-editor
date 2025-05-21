@@ -1,4 +1,4 @@
-import {AlphaStop, ColorMap, ColorMapBin, InterpolationMethod} from '../CommonTypes';
+import {AlphaMapBin, AlphaStop, ColorMap, ColorMapBin, ColorStop, InterpolationMethod} from '../CommonTypes';
 import * as d3Scale from 'd3-scale';
 import * as d3Interpolate from 'd3-interpolate';
 import * as d3Hsv from 'd3-hsv';
@@ -40,7 +40,6 @@ export function getColorFromColorMapAt(colorMap: ColorMap, value: number): strin
   return colorRange(value);
 }
 
-
 const alphaRangeCache = new WeakMap<Array<AlphaStop>, d3Scale.ScaleLinear<number, number>>();
 
 /**
@@ -61,29 +60,47 @@ export function getAlphaRange(alphaStops: Array<AlphaStop>): d3Scale.ScaleLinear
   return alphaRange;
 }
 
-/**
- * This function returns an array of bins with their color, if the color map is discrete. Otherwise, it will return an
- * empty array.
- */
-export function getColorMapBins(colorMap: ColorMap): Array<ColorMapBin> {
-  if (!colorMap.discrete || !colorMap.bins) {
-    return [];
-  }
-
-  const min = colorMap.colorStops[0].stop;
-  const max = colorMap.colorStops[colorMap.colorStops.length - 1].stop;
+/** This function returns an array of bins with their color. */
+export function sampleColorMap(
+  colorStops: Array<ColorStop>,
+  interpolationMethod: InterpolationMethod,
+  samples: number
+): Array<ColorMapBin> {
+  const min = colorStops[0].stop;
+  const max = colorStops[colorStops.length - 1].stop;
   const range = max - min;
-  const binSize = range / colorMap.bins;
+  const binSize = range / samples;
 
-  const colorRange = getColorRange(colorMap);
+  const colorRange = getColorRange({colorStops, interpolationMethod});
   const result: Array<ColorMapBin> = [];
 
-  for (let i = 0; i < colorMap.bins; i++) {
+  for (let i = 0; i < samples; i++) {
     const lowerBound = min + i * binSize;
     const upperBound = lowerBound + binSize;
     const center = (lowerBound + upperBound) / 2;
-    const color = colorRange(Math.floor(center * colorMap.bins) / (colorMap.bins - 1));
+    const color = colorRange(Math.floor(center * samples) / (samples - 1));
     result.push({lowerBound, center, upperBound, color});
+  }
+
+  return result;
+}
+
+/** This function returns an array of bins with their alpha. */
+export function sampleAlphaMap(alphaStops: Array<AlphaStop>, samples: number): Array<AlphaMapBin> {
+  const min = alphaStops[0].stop;
+  const max = alphaStops[alphaStops.length - 1].stop;
+  const range = max - min;
+  const binSize = range / samples;
+
+  const alphaRange = getAlphaRange(alphaStops);
+  const result: Array<AlphaMapBin> = [];
+
+  for (let i = 0; i < samples; i++) {
+    const lowerBound = min + i * binSize;
+    const upperBound = lowerBound + binSize;
+    const center = (lowerBound + upperBound) / 2;
+    const alpha = alphaRange(Math.floor(center * samples) / (samples - 1));
+    result.push({lowerBound, center, upperBound, alpha});
   }
 
   return result;
