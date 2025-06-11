@@ -4,7 +4,6 @@ import {when} from 'lit/directives/when.js';
 import {InterpolationMethod} from './CommonTypes';
 import {drawControlPoint} from './internal/draw';
 import * as d3Color from 'd3-color';
-import {getColorFromColorMapAt} from './internal/util';
 import {ColorPicker} from './ColorPicker';
 import {ColorMapMixin} from './internal/mixins/ColorMapMixin';
 
@@ -179,22 +178,27 @@ export class ColorMapEditor extends ColorMapMixin(LitElement) {
     const context = this.canvas.getContext('2d', {alpha: false});
     if (!context) return;
 
-    // Draw the gradient.
-    for (let i = 0; i < this.canvas.width; ++i) {
-      context.fillStyle = getColorFromColorMapAt(
-        {
-          colorStops: this.colorStopsNormalized,
-          interpolationMethod: this.interpolationMethod,
-          discrete: this.discrete,
-          bins: this.bins,
-        },
-        i / (this.canvas.width - 1)
-      );
-
-      context.fillRect(i, 0, 1, this.canvas.height);
+    // Draw either the gradient or discrete color bins depending on the settings
+    if (this.discrete && this.bins && this.bins > 1 && this.discreteColorStopsNormalized) {
+      // Draw discrete color bins
+      const discreteColorStops = this.discreteColorStopsNormalized;
+      for (const bin of discreteColorStops) {
+        const startX = Math.floor(bin.lowerBound * this.canvas.width);
+        const endX = Math.ceil(bin.upperBound * this.canvas.width);
+        const width = Math.max(1, endX - startX);
+        
+        context.fillStyle = bin.color;
+        context.fillRect(startX, 0, width, this.canvas.height);
+      }
+    } else {
+      // Draw the smooth gradient
+      for (let i = 0; i < this.canvas.width; ++i) {
+        context.fillStyle = this.colorNormalized(i / this.canvas.width);
+        context.fillRect(i, 0, 1, this.canvas.height);
+      }
     }
 
-    // Draw the control points. To ensure visibility everywhere it is an alternating circle in white and black.
+    // Draw the control points. To ensure visibility everywhere, it is an alternating circle in white and black.
     for (let i = 0; i < this.colorStopsNormalized.length; i++) {
       const x = this.colorStopsNormalized[i].stop * this.canvas.width;
       const y = 0.5 * this.canvas.height;
@@ -254,15 +258,7 @@ export class ColorMapEditor extends ColorMapMixin(LitElement) {
       if (!this.isDragging) {
         // If no control point was selected, a new one is being created and also immediately dragged.
         const x = Math.max(0, Math.min(1, ev.offsetX / this.canvas.width));
-        const color = getColorFromColorMapAt(
-          {
-            colorStops: this.colorStopsNormalized,
-            interpolationMethod: this.interpolationMethod,
-            discrete: this.discrete,
-            bins: this.bins,
-          },
-          x
-        );
+        const color = this.colorNormalized(x);
         const stop = {stop: x, color};
         this.colorStopsNormalized = [...this.colorStopsNormalized, stop].sort((a, b) => a.stop - b.stop);
         this.checkDragStart(ev);

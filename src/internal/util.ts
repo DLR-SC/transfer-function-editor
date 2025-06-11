@@ -1,43 +1,104 @@
-import {AlphaMapBin, AlphaStop, ColorMap, ColorMapBin, ColorStop, InterpolationMethod} from '../CommonTypes';
+import {
+  AlphaMapBin,
+  AlphaStop,
+  ColorMapBin,
+  ColorStop,
+  HSL,
+  HSV,
+  InterpolationMethod,
+  RGB,
+} from '../CommonTypes';
 import * as d3Scale from 'd3-scale';
 import * as d3Interpolate from 'd3-interpolate';
 import * as d3Hsv from 'd3-hsv';
+import {hsl as d3HSL, rgb as d3RGB} from 'd3-color';
+import {hsv as d3HSV} from 'd3-hsv';
 
 /** Simple utility to clamp a number between two values. */
 export function clamp(number: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, number));
 }
 
-const colorRangeCache = new WeakMap<ColorMap, d3Scale.ScaleLinear<string, string>>();
-
-/**
- * This utility function creates a color range method from d3 to the given color map. It also does some caching, since
- * this is an expensive object to create.
- */
-export function getColorRange(colorMap: ColorMap): d3Scale.ScaleLinear<string, string> {
-  if (colorRangeCache.has(colorMap)) {
-    return colorRangeCache.get(colorMap)!;
+export class ColorRangeSampler {
+  public set colorStops(value: Array<ColorStop>) {
+    this._colorStops = value;
+    this._colorRange = null;
   }
 
-  const colorRange = d3Scale
-    .scaleLinear<string, number>()
-    .domain(colorMap.colorStops.map((entry) => entry.stop))
-    .range(colorMap.colorStops.map((entry) => entry.color))
-    .interpolate(getColorInterpolator(colorMap.interpolationMethod));
-  colorRangeCache.set(colorMap, colorRange);
-  return colorRange;
-}
-
-/**
- * This function returns a color for a value in the given color map.
- */
-export function getColorFromColorMapAt(colorMap: ColorMap, value: number): string {
-  const colorRange = getColorRange(colorMap);
-  if (colorMap.discrete && colorMap.bins) {
-    return colorRange(Math.floor(value * colorMap.bins) / (colorMap.bins - 1));
+  public set interpolationMethod(value: InterpolationMethod) {
+    this._interpolationMethod = value;
+    this._colorRange = null;
   }
 
-  return colorRange(value);
+  public colorAt(stop: number): string {
+    return this.colorRange(stop);
+  }
+
+  public rgbAt(stop: number): RGB {
+    const rgb = d3RGB(this.colorRange(stop));
+    return {r: Math.round(rgb.r), g: Math.round(rgb.g), b: Math.round(rgb.b)};
+  }
+
+  public rgbNormalizedAt(stop: number): RGB {
+    const rgb = d3RGB(this.colorRange(stop));
+    return {r: rgb.r / 255, g: rgb.g / 255, b: rgb.b / 255};
+  }
+
+  public hsvAt(stop: number): HSV {
+    const hsv = d3HSV(this.colorRange(stop));
+    return {h: Math.round(hsv.h), s: Math.round(hsv.s), v: Math.round(hsv.v)};
+  }
+
+  public hsvNormalizedAt(stop: number): HSV {
+    const hsv = d3HSV(this.colorRange(stop));
+    return {h: hsv.h / 255, s: hsv.s / 255, v: hsv.v / 255};
+  }
+
+  public hslAt(stop: number): HSL {
+    const hsl = d3HSL(this.colorRange(stop));
+    return {h: Math.round(hsl.h), s: Math.round(hsl.s), l: Math.round(hsl.l)};
+  }
+
+  public hslNormalizedAt(stop: number): HSL {
+    const hsl = d3HSL(this.colorRange(stop));
+    return {h: hsl.h / 255, s: hsl.s / 255, l: hsl.l / 255};
+  }
+
+  public sample(samples: number): Array<ColorMapBin> {
+    const min = this._colorStops[0].stop;
+    const max = this._colorStops[this._colorStops.length - 1].stop;
+    const range = max - min;
+    const binSize = range / samples;
+
+    const result: Array<ColorMapBin> = [];
+
+    for (let i = 0; i < samples; i++) {
+      const lowerBound = min + i * binSize;
+      const upperBound = lowerBound + binSize;
+      const center = (lowerBound + upperBound) / 2;
+      const color = this.colorRange(Math.floor(center * samples) / (samples - 1));
+      result.push({lowerBound, center, upperBound, color});
+    }
+
+    return result;
+  }
+
+  private _colorStops: Array<ColorStop> = [];
+  private _interpolationMethod: InterpolationMethod = InterpolationMethod.HSL;
+
+  private _colorRange: d3Scale.ScaleLinear<string, string> | null = null;
+
+  private get colorRange(): d3Scale.ScaleLinear<string, string> {
+    if (this._colorRange === null) {
+      this._colorRange = d3Scale
+        .scaleLinear<string, number>()
+        .domain(this._colorStops.map((entry) => entry.stop))
+        .range(this._colorStops.map((entry) => entry.color))
+        .interpolate(getColorInterpolator(this._interpolationMethod));
+    }
+
+    return this._colorRange;
+  }
 }
 
 const alphaRangeCache = new WeakMap<Array<AlphaStop>, d3Scale.ScaleLinear<number, number>>();
@@ -58,31 +119,6 @@ export function getAlphaRange(alphaStops: Array<AlphaStop>): d3Scale.ScaleLinear
     .interpolate(d3Interpolate.interpolateNumber);
   alphaRangeCache.set(alphaStops, alphaRange);
   return alphaRange;
-}
-
-/** This function returns an array of bins with their color. */
-export function sampleColorMap(
-  colorStops: Array<ColorStop>,
-  interpolationMethod: InterpolationMethod,
-  samples: number
-): Array<ColorMapBin> {
-  const min = colorStops[0].stop;
-  const max = colorStops[colorStops.length - 1].stop;
-  const range = max - min;
-  const binSize = range / samples;
-
-  const colorRange = getColorRange({colorStops, interpolationMethod});
-  const result: Array<ColorMapBin> = [];
-
-  for (let i = 0; i < samples; i++) {
-    const lowerBound = min + i * binSize;
-    const upperBound = lowerBound + binSize;
-    const center = (lowerBound + upperBound) / 2;
-    const color = colorRange(Math.floor(center * samples) / (samples - 1));
-    result.push({lowerBound, center, upperBound, color});
-  }
-
-  return result;
 }
 
 /** This function returns an array of bins with their alpha. */

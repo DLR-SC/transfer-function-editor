@@ -1,14 +1,15 @@
-import {LitElement} from 'lit';
+import {LitElement, PropertyValues} from 'lit';
 import {property} from 'lit/decorators.js';
-import {ColorMap, ColorMapBin, ColorStop, InterpolationMethod} from '../../CommonTypes';
+import {ColorMap, ColorMapBin, ColorStop, HSL, HSV, InterpolationMethod, RGB} from '../../CommonTypes';
 import {RangeMixin, RangeMixinInterface} from './RangeMixin';
-import {Constructor, getColorFromColorMapAt, sampleColorMap} from '../util';
+import {ColorRangeSampler, Constructor} from '../util';
 
 export declare class ColorMapMixinInterface {
   colorStops: Array<ColorStop>;
   colorStopsNormalized: Array<ColorStop>;
 
   get discreteColorStops(): Array<ColorMapBin> | undefined;
+
   get discreteColorStopsNormalized(): Array<ColorMapBin> | undefined;
 
   interpolationMethod: InterpolationMethod;
@@ -19,9 +20,23 @@ export declare class ColorMapMixinInterface {
   colorMapNormalized: ColorMap;
 
   color(stop: number): string;
+
   colorNormalized(stop: number): string;
 
+  rgb(stop: number): RGB;
+
+  rgbNormalized(stop: number): RGB;
+
+  hsl(stop: number): HSL;
+
+  hslNormalized(stop: number): HSL;
+
+  hsv(stop: number): HSV;
+
+  hsvNormalized(stop: number): HSV;
+
   public sampleColor(samples: number): Array<ColorMapBin>;
+
   public sampleColorNormalized(samples: number): Array<ColorMapBin>;
 
   showStopNumbers: boolean;
@@ -92,27 +107,56 @@ export const ColorMapMixin = <TBase extends Constructor<LitElement>>(
       this.bins = value.bins ?? 7;
     }
 
+    private rangeSampler: ColorRangeSampler = new ColorRangeSampler();
+    private rangeSamplerNormalized: ColorRangeSampler = new ColorRangeSampler();
+
     public color(stop: number): string {
-      return getColorFromColorMapAt(this.colorMap, stop - this.range[0] / (this.range[1] - this.range[0]));
+      return this.rangeSampler.colorAt(stop);
     }
 
     public colorNormalized(stop: number): string {
-      return getColorFromColorMapAt(this.colorMapNormalized, stop);
+      return this.rangeSamplerNormalized.colorAt(stop);
+    }
+
+    rgb(stop: number): RGB {
+      return this.rangeSampler.rgbAt(stop);
+    }
+
+
+    rgbNormalized(stop: number): RGB {
+      return this.rangeSamplerNormalized.rgbAt(stop);
+    }
+
+    hsl(stop: number): HSL {
+      return this.rangeSampler.hslAt(stop);
+    }
+
+    hslNormalized(stop: number): HSL {
+      return this.rangeSamplerNormalized.hslAt(stop);
+    }
+
+    hsv(stop: number): HSV {
+      return this.rangeSampler.hsvAt(stop);
+    }
+
+    hsvNormalized(stop: number): HSV {
+      return this.rangeSamplerNormalized.hsvAt(stop);
     }
 
     get discreteColorStops(): Array<ColorMapBin> | undefined {
       return this.discrete ? this.sampleColor(this.bins) : undefined;
     }
+
     get discreteColorStopsNormalized(): Array<ColorMapBin> | undefined {
       return this.discrete ? this.sampleColorNormalized(this.bins) : undefined;
     }
 
     public sampleColor(samples: number): Array<ColorMapBin> {
-      return sampleColorMap(this.colorStops, this.interpolationMethod, samples);
+      return this.rangeSampler.sample(samples);
     }
 
     public sampleColorNormalized(samples: number): Array<ColorMapBin> {
-      return sampleColorMap(this.colorStopsNormalized, this.interpolationMethod, samples);
+      return this.rangeSamplerNormalized.sample(samples);
     }
 
     @property({type: String, attribute: 'interpolation-method'})
@@ -132,6 +176,23 @@ export const ColorMapMixin = <TBase extends Constructor<LitElement>>(
 
     @property({type: Boolean, attribute: 'bin-selector-editable'})
     binSelectorEditable: boolean = false;
+
+    override update(changed: PropertyValues<this>) {
+      super.update(changed);
+
+      if (changed.has('colorStops')) {
+        this.rangeSampler.colorStops = this.colorStops;
+      }
+
+      if (changed.has('colorStopsNormalized')) {
+        this.rangeSamplerNormalized.colorStops = this.colorStopsNormalized;
+      }
+
+      if (changed.has('interpolationMethod')) {
+        this.rangeSampler.interpolationMethod = this.interpolationMethod;
+        this.rangeSamplerNormalized.interpolationMethod = this.interpolationMethod;
+      }
+    }
   }
 
   return ColorMapMixinClass as Constructor<ColorMapMixinInterface> & Constructor<RangeMixinInterface> & TBase;

@@ -81,16 +81,38 @@ export class TransparencyEditor extends TransferFunctionMixin(LitElement) {
       }
     }
 
-    // Draw the color gradient.
-    for (let i = 0; i < this.canvas.width; ++i) {
-      const alpha = this.alphaNormalized(i / (this.canvas.width - 1));
-      context.fillStyle = this.alphaColorNormalized(i / (this.canvas.width - 1));
-      context.fillRect(i, (1 - alpha) * this.canvas.height, 1, alpha * this.canvas.height);
+    // Draw either the gradient or discrete color bins depending on the settings
+    if (this.discrete && this.bins && this.bins > 1 && this.discreteColorStopsNormalized) {
+      // Draw discrete color bins
+      const binWidth = this.canvas.width / this.bins;
 
-      if (!this.disableAlphaGrid) {
-        context.clearRect(i, 0, 1, (1 - alpha) * this.canvas.height);
+      for (let i = 0; i < this.bins; i++) {
+        const normalizedPosition = (i + 0.5) / this.bins; // Center position of bin
+        const alpha = this.alphaNormalized(normalizedPosition);
+
+        // Draw the bin with uniform color
+        context.fillStyle = this.alphaColorNormalized(normalizedPosition);
+        context.fillRect(i * binWidth, (1 - alpha) * this.canvas.height, binWidth, alpha * this.canvas.height);
+
+        // Clear the area above the bin if alpha grid is enabled
+        if (!this.disableAlphaGrid) {
+          context.clearRect(i * binWidth, 0, binWidth, (1 - alpha) * this.canvas.height);
+        }
+      }
+
+    } else {
+      // Draw the color gradient.
+      for (let i = 0; i < this.canvas.width; ++i) {
+        const alpha = this.alphaNormalized(i / (this.canvas.width - 1));
+        context.fillStyle = this.alphaColorNormalized(i / (this.canvas.width - 1));
+        context.fillRect(i, (1 - alpha) * this.canvas.height, 1, alpha * this.canvas.height);
+
+        if (!this.disableAlphaGrid) {
+          context.clearRect(i, 0, 1, (1 - alpha) * this.canvas.height);
+        }
       }
     }
+
 
     // Draw the lines between points.
     context.strokeStyle = 'black';
