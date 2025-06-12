@@ -99,7 +99,6 @@ export class TransparencyEditor extends TransferFunctionMixin(LitElement) {
           context.clearRect(i * binWidth, 0, binWidth, (1 - alpha) * this.canvas.height);
         }
       }
-
     } else {
       // Draw the color gradient.
       for (let i = 0; i < this.canvas.width; ++i) {
@@ -112,7 +111,6 @@ export class TransparencyEditor extends TransferFunctionMixin(LitElement) {
         }
       }
     }
-
 
     // Draw the lines between points.
     context.strokeStyle = 'black';

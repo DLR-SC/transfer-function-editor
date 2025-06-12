@@ -8,12 +8,15 @@ import * as d3Color from 'd3-color';
 
 export declare class TransferFunctionMixinInterface {
   get transferFunction(): TransferFunction;
+
   get transferFunctionNormalized(): TransferFunction;
 
   public sampleAlphaColor(samples: number): Array<ColorMapBin & AlphaMapBin>;
+
   public sampleAlphaColorNormalized(samples: number): Array<ColorMapBin & AlphaMapBin>;
 
   alphaColor(stop: number): string;
+
   alphaColorNormalized(stop: number): string;
 }
 

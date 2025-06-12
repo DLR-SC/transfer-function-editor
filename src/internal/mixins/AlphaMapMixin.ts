@@ -1,17 +1,21 @@
-import {LitElement} from 'lit';
+import {LitElement, PropertyValues} from 'lit';
 import {property} from 'lit/decorators.js';
 import {AlphaMapBin, AlphaStop} from '../../CommonTypes';
 import {RangeMixin, RangeMixinInterface} from './RangeMixin';
-import {Constructor, getAlphaRange, sampleAlphaMap} from '../util';
+import {Constructor} from '../util';
+import {DiscreteMixin, DiscreteMixinInterface} from './DiscreteMixin';
+import AlphaRangeSampler from '../AlphaRangeSampler';
 
 export declare class AlphaMapMixinInterface {
   alphaStops: Array<AlphaStop>;
   alphaStopsNormalized: Array<AlphaStop>;
 
   public alpha(stop: number): number;
+
   public alphaNormalized(stop: number): number;
 
   public sampleAlpha(samples: number): Array<AlphaMapBin>;
+
   public sampleAlphaNormalized(samples: number): Array<AlphaMapBin>;
 
   disableAlphaGrid: boolean;
@@ -19,7 +23,7 @@ export declare class AlphaMapMixinInterface {
 }
 
 export const AlphaMapMixin = <TBase extends Constructor<LitElement>>(base: TBase) => {
-  class AlphaMapMixinClass extends RangeMixin(base) {
+  class AlphaMapMixinClass extends DiscreteMixin(RangeMixin(base)) {
     @property({type: Array, attribute: 'alpha-stops-normalized'})
     alphaStopsNormalized: Array<AlphaStop> = [
       {stop: 0, alpha: 0},
@@ -43,19 +47,19 @@ export const AlphaMapMixin = <TBase extends Constructor<LitElement>>(base: TBase
     }
 
     public alpha(stop: number): number {
-      return this.alphaNormalized(stop - this.range[0] / (this.range[1] - this.range[0]));
+      return this.alphaRangeSampler.alphaAt(stop);
     }
 
     public alphaNormalized(stop: number): number {
-      return getAlphaRange(this.alphaStopsNormalized)(stop);
+      return this.alphaRangeSamplerNormalized.alphaAt(stop);
     }
 
     public sampleAlpha(samples: number): Array<AlphaMapBin> {
-      return sampleAlphaMap(this.alphaStops, samples);
+      return this.alphaRangeSampler.sample(samples);
     }
 
     public sampleAlphaNormalized(samples: number): Array<AlphaMapBin> {
-      return sampleAlphaMap(this.alphaStopsNormalized, samples);
+      return this.alphaRangeSamplerNormalized.sample(samples);
     }
 
     @property({type: Boolean, attribute: 'disable-alpha-grid'})
@@ -63,7 +67,26 @@ export const AlphaMapMixin = <TBase extends Constructor<LitElement>>(base: TBase
 
     @property({type: Number, attribute: 'alpha-grid-size'})
     alphaGridSize: number = 8;
+
+
+    private alphaRangeSampler: AlphaRangeSampler = new AlphaRangeSampler();
+    private alphaRangeSamplerNormalized: AlphaRangeSampler = new AlphaRangeSampler();
+
+    override update(changed: PropertyValues<this>) {
+      super.update(changed);
+
+      if (changed.has('alphaStops')) {
+        this.alphaRangeSampler.alphaStops = this.alphaStops;
+      }
+
+      if (changed.has('alphaStopsNormalized')) {
+        this.alphaRangeSamplerNormalized.alphaStops = this.alphaStopsNormalized;
+      }
+    }
   }
 
-  return AlphaMapMixinClass as Constructor<AlphaMapMixinInterface> & Constructor<RangeMixinInterface> & TBase;
+  return AlphaMapMixinClass as Constructor<AlphaMapMixinInterface> &
+    Constructor<RangeMixinInterface> &
+    Constructor<DiscreteMixinInterface> &
+    TBase;
 };

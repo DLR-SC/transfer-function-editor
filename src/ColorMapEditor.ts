@@ -186,7 +186,7 @@ export class ColorMapEditor extends ColorMapMixin(LitElement) {
         const startX = Math.floor(bin.lowerBound * this.canvas.width);
         const endX = Math.ceil(bin.upperBound * this.canvas.width);
         const width = Math.max(1, endX - startX);
-        
+
         context.fillStyle = bin.color;
         context.fillRect(startX, 0, width, this.canvas.height);
       }

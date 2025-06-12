@@ -55,7 +55,7 @@ export interface ColorMap {
   /** The colors at the specified stops. */
   colorStops: Array<ColorStop>;
 
-  discreteColorStops?: Array<ColorMapBin>;
+  discreteColorStops?: Array<ColorMapBin & Partial<AlphaMapBin>>;
 
   /** The method on how the color between stops is being computed. */
   interpolationMethod: InterpolationMethod;
